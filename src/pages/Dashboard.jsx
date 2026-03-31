@@ -777,25 +777,24 @@ export default function Dashboard({ user, onLogout }) {
             setMousePos({ x: xOffset, y: yOffset }); 
          }}
       >
-          {/* AUTO-POKE SPEECH BUBBLE */}
+          {/* AUTO-POKE SPEECH BUBBLE (Left side of button) */}
           {isAutoPoking && !isChatOpen && (
               <div style={{
                   position: 'absolute',
-                  bottom: '140%', // Push it higher so it doesn't overlap the periscope head
-                  right: '0px',
-                  width: '240px',
-                  background: 'rgba(15, 23, 42, 0.65)', // Transparent dark glassy look
+                  bottom: '10px', // Align near the bottom of the fab
+                  right: '120%', // Push it to the left of the fab wrapper
+                  width: '250px',
+                  background: 'rgba(15, 23, 42, 0.70)', // Transparent dark glassy look
                   backdropFilter: 'blur(12px)',
                   WebkitBackdropFilter: 'blur(12px)',
                   padding: '14px 18px',
                   borderRadius: '16px',
-                  borderBottomRightRadius: '4px',
+                  borderBottomRightRadius: '4px', // Tail pointing to the right towards the button
                   color: '#e2e8f0',
                   fontSize: '0.85rem',
                   lineHeight: '1.4',
                   boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
                   zIndex: 1100,
-                  marginBottom: '10px',
                   animation: 'fadeIn 0.3s ease-out forwards',
                   border: '1px solid rgba(56, 189, 248, 0.2)'
               }}>
