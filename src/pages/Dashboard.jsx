@@ -764,7 +764,7 @@ export default function Dashboard({ user, onLogout }) {
                                 <span style={{ color: '#f87171', fontSize: '0.75rem', fontWeight: 'bold' }}>-%{(stats.totalLossPercentage || 0).toFixed(1)}</span>
                             </div>
                             <h2 style={{ margin: '1rem 0 0.25rem 0', fontSize: '1.75rem', color: '#fff' }}>{stats.losses}</h2>
-                            <p style={{ color: '#888', fontSize: '0.85rem', margin: 0 }}>Hatalı (SL)</p>
+                            <p style={{ color: '#888', fontSize: '0.85rem', margin: 0 }}>Stop (SL)</p>
                             <p style={{ color: '#666', fontSize: '0.7rem', marginTop: '4px' }}>Tıkla ve İncele</p>
                         </div>
                     </div>
