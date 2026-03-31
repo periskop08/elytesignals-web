@@ -721,16 +721,16 @@ export default function Dashboard({ user, onLogout }) {
              ) : (
                  <>
                     <h2 style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '8px', color: '#fff' }}>
-                        <PieChart size={28} color="#4ade80" /> Elyte Statistics
+                        <PieChart size={28} color="#4ade80" /> Elyte İstatistikleri
                     </h2>
-                    <p style={{ color: '#888', fontSize: '0.85rem', marginBottom: '2rem' }}>Reports the simulated result as if every signal was traded with a fixed $30 size.</p>
+                    <p style={{ color: '#888', fontSize: '0.85rem', marginBottom: '2rem' }}>Her sinyale sabit 30$ yatırıldığı varsayılarak hesaplanan tahmini cüzdan durumudur.</p>
 
                     <div style={{
                         background: '#162336', padding: '1.5rem', borderRadius: '20px', 
                         border: '1px solid rgba(255,255,255,0.08)', marginBottom: '1.5rem',
                         textAlign: 'center'
                     }}>
-                        <p style={{ color: '#aaa', fontSize: '0.9rem', marginBottom: '0.5rem' }}>Simulated Wallet Growth (PnL)</p>
+                        <p style={{ color: '#aaa', fontSize: '0.9rem', marginBottom: '0.5rem' }}>Tahmini Cüzdan Büyümesi (PnL)</p>
                         <h1 style={{ fontSize: '2.5rem', fontWeight: 'bold', margin: 0, color: stats.totalProfit >= 0 ? '#4ade80' : '#f87171' }}>
                             {stats.totalProfit >= 0 ? '+' : ''}${stats.totalProfit.toFixed(2)}
                         </h1>
@@ -749,7 +749,7 @@ export default function Dashboard({ user, onLogout }) {
                                 <span style={{ color: '#4ade80', fontSize: '0.75rem', fontWeight: 'bold' }}>+%{(stats.totalWinPercentage || 0).toFixed(1)}</span>
                             </div>
                             <h2 style={{ margin: '1rem 0 0.25rem 0', fontSize: '1.75rem', color: '#fff' }}>{stats.wins}</h2>
-                            <p style={{ color: '#888', fontSize: '0.85rem', margin: 0 }}>Wins (TP)</p>
+                            <p style={{ color: '#888', fontSize: '0.85rem', margin: 0 }}>Başarılı (TP)</p>
                             <p style={{ color: '#666', fontSize: '0.7rem', marginTop: '4px' }}>Tıkla ve İncele</p>
                         </div>
                         <div 
@@ -764,7 +764,7 @@ export default function Dashboard({ user, onLogout }) {
                                 <span style={{ color: '#f87171', fontSize: '0.75rem', fontWeight: 'bold' }}>-%{(stats.totalLossPercentage || 0).toFixed(1)}</span>
                             </div>
                             <h2 style={{ margin: '1rem 0 0.25rem 0', fontSize: '1.75rem', color: '#fff' }}>{stats.losses}</h2>
-                            <p style={{ color: '#888', fontSize: '0.85rem', margin: 0 }}>Losses (SL)</p>
+                            <p style={{ color: '#888', fontSize: '0.85rem', margin: 0 }}>Hatalı (SL)</p>
                             <p style={{ color: '#666', fontSize: '0.7rem', marginTop: '4px' }}>Tıkla ve İncele</p>
                         </div>
                     </div>
@@ -773,12 +773,12 @@ export default function Dashboard({ user, onLogout }) {
                         <div style={{ flex: 1, minWidth: '150px', background: '#162336', padding: '1.5rem', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)', textAlign: 'center' }}>
                             <Target color="#3b82f6" size={32} style={{ margin: '0 auto' }} />
                             <h2 style={{ margin: '1rem 0 0.25rem 0', fontSize: '1.75rem', color: '#fff' }}>%{stats.winRate.toFixed(1)}</h2>
-                            <p style={{ color: '#888', fontSize: '0.85rem', margin: 0 }}>Win Rate</p>
+                            <p style={{ color: '#888', fontSize: '0.85rem', margin: 0 }}>Kazanma Oranı</p>
                         </div>
                         <div style={{ flex: 1, minWidth: '150px', background: '#162336', padding: '1.5rem', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)', textAlign: 'center' }}>
                             <Zap color="#eab308" size={32} style={{ margin: '0 auto' }} />
                             <h2 style={{ margin: '1rem 0 0.25rem 0', fontSize: '1.75rem', color: '#fff' }}>{stats.totalSignals}</h2>
-                            <p style={{ color: '#888', fontSize: '0.85rem', margin: 0 }}>Total Signals</p>
+                            <p style={{ color: '#888', fontSize: '0.85rem', margin: 0 }}>Toplam Sinyal</p>
                         </div>
                     </div>
 
@@ -788,10 +788,10 @@ export default function Dashboard({ user, onLogout }) {
                     }}>
                         <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem', gap: '8px' }}>
                             <span style={{ fontSize: '1.25rem' }}>✨</span>
-                            <span style={{ color: '#eab308', fontWeight: 'bold' }}>Trades Reaching +2%</span>
+                            <span style={{ color: '#eab308', fontWeight: 'bold' }}>+%2 Kârı Gören İşlemler</span>
                         </div>
-                        <h2 style={{ margin: '0 0 0.5rem 0', fontSize: '2rem', color: '#fff' }}>{stats.reachedTwoPercentCount} <span style={{ fontSize: '1rem', color: '#aaa', fontWeight: 'normal' }}>trades</span></h2>
-                        <p style={{ color: '#ccc', fontSize: '0.85rem', lineHeight: '1.4', margin: 0 }}>Total number of strong trades that successfully reached at least +2% profit while active, even if they eventually hit stop-loss.</p>
+                        <h2 style={{ margin: '0 0 0.5rem 0', fontSize: '2rem', color: '#fff' }}>{stats.reachedTwoPercentCount} <span style={{ fontSize: '1rem', color: '#aaa', fontWeight: 'normal' }}>işlem</span></h2>
+                        <p style={{ color: '#ccc', fontSize: '0.85rem', lineHeight: '1.4', margin: 0 }}>İşlem aktifken en az +%2 kâra ulaşan güçlü sinyallerin toplam sayısıdır. (İşlem sonrasında stop-loss kapanmış olsa bile buraya yansır)</p>
                     </div>
                  </>
              )}
