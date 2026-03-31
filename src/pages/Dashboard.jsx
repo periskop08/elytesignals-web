@@ -1,0 +1,374 @@
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { 
+  Activity, Star, Clock, PieChart, 
+  Send, Bot, Target, AlertTriangle, ShieldCheck, 
+  TrendingUp, TrendingDown, RefreshCcw, LogOut, Zap, ArrowLeft, MessageSquare, X
+} from 'lucide-react';
+
+export default function Dashboard({ user, onLogout }) {
+  const [signals, setSignals] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [chatLog, setChatLog] = useState([{ sender: 'ai', text: 'Periskop AI devrede. Piyasa dalgalarını analiz edebiliriz. Hangi Coin hakkında görüş istersiniz?' }]);
+  const [chatInput, setChatInput] = useState('');
+  const [chatLoading, setChatLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('markets');
+  const [favorites, setFavorites] = useState(() => JSON.parse(localStorage.getItem('web_favorites') || '[]'));
+  const [selectedSignal, setSelectedSignal] = useState(null);
+  const [livePrices, setLivePrices] = useState({});
+  const [isChatOpen, setIsChatOpen] = useState(false);
+
+  useEffect(() => {
+    fetchSignals();
+    fetchPrices();
+    const interval = setInterval(fetchSignals, 60000);
+    const priceInterval = setInterval(fetchPrices, 5000);
+    return () => {
+        clearInterval(interval);
+        clearInterval(priceInterval);
+    };
+  }, []);
+
+  const fetchSignals = async () => {
+    try {
+      const res = await axios.get('/api/signals/active');
+      setSignals(res.data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchPrices = async () => {
+    try {
+      const res = await axios.get('https://api.bybit.com/v5/market/tickers?category=linear');
+      if (res.data && res.data.result && res.data.result.list) {
+         const prices = {};
+         res.data.result.list.forEach(t => {
+            prices[t.symbol] = parseFloat(t.lastPrice);
+         });
+         setLivePrices(prices);
+      }
+    } catch(e) {}
+  };
+
+  const toggleFavorite = (signal) => {
+    setFavorites(prev => {
+        const isFav = prev.some(f => f.id === signal.id);
+        const newFavs = isFav ? prev.filter(f => f.id !== signal.id) : [...prev, signal];
+        localStorage.setItem('web_favorites', JSON.stringify(newFavs));
+        return newFavs;
+    });
+  };
+
+  const handleChat = async () => {
+    if(!chatInput.trim() || chatLoading) return;
+    
+    const userMsg = chatInput;
+    setChatLog([...chatLog, { sender: 'user', text: userMsg }]);
+    setChatInput('');
+    setChatLoading(true);
+
+    try {
+      const resp = await axios.post('/api/analysis', { coin: userMsg });
+      setChatLog(prev => [...prev, { sender: 'ai', text: resp.data.message || 'Analiz tamamlandı.' }]);
+    } catch (err) {
+      setChatLog(prev => [...prev, { sender: 'ai', text: 'Sistem hatası. AWS sunucusuna ulaşılamadı. Lütfen VIP grubunu kontrol edin.' }]);
+    } finally {
+      setChatLoading(false);
+    }
+  };
+
+  const calculateProgress = (entry, current, target, isLong) => {
+      const rand = Math.random() * 80 + 10;
+      return rand;
+  };
+
+  const renderSignalCard = (s, isFavTab) => {
+    const isLong = s.type === 'LONG';
+    const isFav = favorites.some(f => f.id === s.id);
+    const fmtPrice = val => parseFloat(val).toLocaleString('en-US', {maximumFractionDigits:5});
+    
+    const symbolKey = s.coin ? s.coin.replace('/', '') : s.symbol.replace('/', '');
+    const currentPrice = livePrices[symbolKey];
+    
+    let pnl = null;
+    let blinkClass = '';
+    let isProfit = false;
+    let isBigProfit = false;
+    
+    if (currentPrice && s.status === 'ACTIVE') {
+       const entry = parseFloat(s.entryPrice);
+       if (isLong) pnl = ((currentPrice - entry) / entry) * 100;
+       else pnl = ((entry - currentPrice) / entry) * 100;
+       
+       isProfit = pnl > 0;
+       isBigProfit = Math.abs(pnl) >= 1.0;
+       if (isBigProfit) {
+           if (Math.abs(pnl) >= 3.0) blinkClass = isProfit ? 'blink-speed-3' : 'blink-speed-3-loss';
+           else if (Math.abs(pnl) >= 2.0) blinkClass = isProfit ? 'blink-speed-2' : 'blink-speed-2-loss';
+           else blinkClass = isProfit ? 'blink-speed-1' : 'blink-speed-1-loss';
+       }
+    }
+
+    return (
+        <div className={`signal-card ${s.type}`} key={isFavTab ? `fav-${s.id}` : s.id} style={{ padding: '16px', borderRadius: '20px', backgroundColor: '#162336', borderWidth: '1px', borderColor: 'rgba(255,255,255,0.08)', marginBottom: '4px', cursor: 'pointer' }} onClick={() => setSelectedSignal(s)}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <div style={{ width: '42px', height: '42px', borderRadius: '12px', backgroundColor: isLong ? 'rgba(74, 222, 128, 0.15)' : 'rgba(248, 113, 113, 0.15)', display: 'flex', justifyContent: 'center', alignItems: 'center', marginRight: '14px' }}>
+                        {isLong ? <TrendingUp color={isLong ? '#4ade80' : '#f87171'} size={20} /> : <TrendingDown color={isLong ? '#4ade80' : '#f87171'} size={20} />}
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <span style={{ color: '#fff', fontSize: '1.2rem', fontWeight: 'bold' }}>{s.symbol}</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px' }}>
+                            <span style={{ color: '#888', fontSize: '0.8rem' }}>{new Date(s.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                            <div style={{ display: 'flex', alignItems: 'center', backgroundColor: 'rgba(56, 189, 248, 0.15)', padding: '2px 6px', borderRadius: '6px' }}>
+                                <Zap color="#38bdf8" size={10} fill="#38bdf8" style={{marginRight: 4}} />
+                                <span style={{color: '#38bdf8', fontSize: '0.75rem', fontWeight: 'bold'}}>{s.qualityScore || 0}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+        
+                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                    {pnl !== null && (
+                        <div className={`pnl-badge ${isProfit ? 'profit' : 'loss'} ${blinkClass}`}>
+                            {isProfit ? '+' : ''}{pnl.toFixed(2)}%
+                        </div>
+                    )}
+                    <span style={{ color: isLong ? '#4ade80' : '#f87171', fontWeight: 'bold', fontSize: '0.95rem', letterSpacing: '0.5px' }}>{s.type}</span>
+                    <Star color={isFav ? '#eab308' : '#555'} fill={isFav ? '#eab308' : 'none'} size={24} style={{cursor: 'pointer'}} onClick={(e) => { e.stopPropagation(); toggleFavorite(s); }} />
+                </div>
+            </div>
+        
+            <div style={{ display: 'flex', justifyContent: 'space-between', backgroundColor: 'rgba(0,0,0,0.25)', padding: '16px', borderRadius: '14px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
+                    <span style={{ color: '#aaa', fontSize: '0.75rem', marginBottom: '8px' }}>Giriş</span>
+                    <span style={{ color: '#fff', fontSize: '1rem', fontWeight: '600' }}>${fmtPrice(s.entryPrice)}</span>
+                </div>
+        
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '8px' }}>
+                        <span style={{ color: '#aaa', fontSize: '0.75rem' }}>Hedef</span>
+                        <span style={{ color: '#4ade80', fontSize: '0.65rem', fontWeight: 'bold' }}>(+%{(Math.abs(s.targetPrice - s.entryPrice) / s.entryPrice * 100).toFixed(2)})</span>
+                    </div>
+                    <span style={{ color: '#fff', fontSize: '1rem', fontWeight: '600' }}>${fmtPrice(s.targetPrice)}</span>
+                </div>
+        
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '8px' }}>
+                        <span style={{ color: '#aaa', fontSize: '0.75rem' }}>Stop Loss</span>
+                        <span style={{ color: '#f87171', fontSize: '0.65rem', fontWeight: 'bold' }}>(-%{(Math.abs(s.stopPrice - s.entryPrice) / s.entryPrice * 100).toFixed(2)})</span>
+                    </div>
+                    <span style={{ color: '#fff', fontSize: '1rem', fontWeight: '600' }}>${fmtPrice(s.stopPrice)}</span>
+                </div>
+            </div>
+        </div>
+    );
+  };
+
+  if(!user) return null;
+
+  return (
+    <div className="dashboard-layout">
+      
+      {/* SIDEBAR */}
+      <div className="sidebar">
+        <div style={{ padding: '2rem 1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ background: 'rgba(74, 222, 128, 0.15)', padding: '10px', borderRadius: '12px' }}>
+            <Activity color="#4ade80" size={28} />
+          </div>
+          <h2 style={{ letterSpacing: 1, fontSize: '1.4rem' }}>ELYTE</h2>
+        </div>
+        
+        <div style={{ padding: '1.5rem 0', flex: 1, display: 'flex', flexDirection: 'column' }}>
+            <p style={{ color: '#666', fontSize: '0.75rem', marginBottom: '1rem', textTransform: 'uppercase', letterSpacing: '1px', paddingLeft: '24px' }}>ANA MENÜ</p>
+            
+            <div className={`sidebar-nav-item ${activeTab === 'markets' ? 'active' : ''}`} onClick={() => setActiveTab('markets')}>
+               <Activity size={20} />
+               <span>Taramalar</span>
+            </div>
+            <div className={`sidebar-nav-item ${activeTab === 'favorites' ? 'active' : ''}`} onClick={() => setActiveTab('favorites')}>
+               <Star size={20} />
+               <span>Favoriler</span>
+            </div>
+            <div className={`sidebar-nav-item ${activeTab === 'stats' ? 'active' : ''}`} onClick={() => setActiveTab('stats')}>
+               <PieChart size={20} />
+               <span>İstatistikler</span>
+            </div>
+            <div className={`sidebar-nav-item ${activeTab === 'history' ? 'active' : ''}`} onClick={() => setActiveTab('history')}>
+               <Clock size={20} />
+               <span>Geçmiş İşlemler</span>
+            </div>
+        </div>
+
+        <div style={{ padding: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+               <img src={user.photo || 'https://randomuser.me/api/portraits/lego/1.jpg'} style={{ width: 44, height: 44, borderRadius: 22, border: '2px solid rgba(255,255,255,0.1)' }}/>
+               <div style={{flex: 1, overflow: 'hidden'}}>
+                  <p style={{ fontWeight: 'bold', fontSize: '1rem', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{user.name}</p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
+                      {user.isVip ? <ShieldCheck size={14} color="#eab308" /> : null}
+                      <p style={{ fontSize: '0.75rem', color: user.isVip ? '#eab308' : '#888' }}>{user.isVip ? 'VIP Üye' : 'Standart Üye'}</p>
+                  </div>
+               </div>
+            </div>
+            <button onClick={onLogout} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)', width: '100%', padding: '12px', borderRadius: '12px', cursor: 'pointer', fontWeight: 'bold', transition: 'all 0.2s' }}>
+                <LogOut size={18} /> Çıkış Yap
+            </button>
+        </div>
+      </div>
+
+      {/* MIDDLE PANEL - SIGNALS */}
+      <div className="signals-panel">
+        
+        {selectedSignal ? (
+            <div className="signal-detail-view" style={{ animation: 'slideIn 0.3s forwards' }}>
+                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px', gap: '15px' }}>
+                    <button onClick={() => setSelectedSignal(null)} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: '#fff', padding: '10px', borderRadius: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                        <ArrowLeft size={20} />
+                    </button>
+                    <h1 style={{ fontSize: '1.8rem', fontWeight: '800' }}>{selectedSignal.coin || selectedSignal.symbol} Analizi</h1>
+                </div>
+                
+                {renderSignalCard(selectedSignal, false)}
+
+                <div style={{ marginTop: '24px', background: 'rgba(22, 35, 54, 0.4)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden' }}>
+                    <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                        <h3 style={{ fontSize: '1.1rem', fontWeight: '600' }}>Canlı Piyasa Grafiği (1H)</h3>
+                    </div>
+                    
+                    <div style={{ height: '480px', width: '100%' }}>
+                        <iframe 
+                            src={`https://s.tradingview.com/widgetembed/?frameElementId=tradingview_chart&symbol=BYBIT%3A${(selectedSignal.coin || selectedSignal.symbol).replace('/', '')}.P&interval=60&symboledit=1&saveimage=1&toolbarbg=f1f3f6&studies=%5B%5D&theme=dark&style=1&timezone=Etc%2FUTC&studies_overrides=%7B%7D&overrides=%7B%7D&enabled_features=%5B%5D&disabled_features=%5B%5D&locale=tr&utm_source=localhost&utm_medium=widget&utm_campaign=chart&utm_term=BYBIT%3A${(selectedSignal.coin || selectedSignal.symbol).replace('/', '')}.P`}
+                            style={{ width: '100%', height: '100%', border: 'none' }}
+                            allowTransparency="true"
+                            scrolling="no"
+                            allowFullScreen
+                        ></iframe>
+                    </div>
+                </div>
+            </div>
+        ) : (
+          <>
+            {activeTab === 'markets' && (
+          <>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '1rem' }}>
+               <div>
+                   <h1 style={{ fontSize: '2rem', marginBottom: '0.5rem', fontWeight: '800' }}>Canlı Akış</h1>
+                   <p style={{ color: '#888', fontSize: '1rem' }}>Periskop yapay zeka analiz motorunun anlık tespitleri.</p>
+               </div>
+               <button onClick={fetchSignals} disabled={loading} style={{ background: 'rgba(255,255,255,0.1)', color: '#fff', border: 'none', padding: '10px 14px', borderRadius: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                   <RefreshCcw size={16} className={loading ? 'fa-spin' : ''} />
+                   <span>Yenile</span>
+               </button>
+            </div>
+            
+            {loading ? (
+               <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '200px', flexDirection: 'column', gap: '15px' }}>
+                   <Activity size={32} color="#4ade80" />
+                   <p style={{ color: '#888' }}>Sinyaller Taranıyor...</p>
+               </div>
+            ) : (
+                <div className="signals-grid">
+                    {signals.filter(s => s.status === 'ACTIVE').length === 0 ? (
+                        <div className="glass" style={{ padding: '3rem', textAlign: 'center', gridColumn: '1 / -1', borderRadius: '20px' }}>
+                            <Target size={40} color="#888" style={{ marginBottom: '1rem' }} />
+                            <h3 style={{ color: '#aaa', marginBottom: '0.5rem' }}>Aktif Fırsat Yok</h3>
+                            <p style={{ color: '#666' }}>Piyasa koşulları şu an Elliott sarmalına uygun değil, lütfen bekleyin.</p>
+                        </div>
+                    ) : signals.filter(s => s.status === 'ACTIVE').map(s => renderSignalCard(s, false))}
+                </div>
+            )}
+          </>
+        )}
+
+        {activeTab === 'favorites' && (
+          <>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '1rem' }}>
+              <div>
+                 <h1 style={{ fontSize: '2rem', marginBottom: '0.5rem', fontWeight: '800' }}>Favoriler</h1>
+                 <p style={{ color: '#888', fontSize: '1rem' }}>Sizin için önemli olan sinyalleri yıldızlıyorsunuz.</p>
+              </div>
+            </div>
+            {favorites.length === 0 ? (
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60%', flexDirection: 'column' }}>
+                   <Star size={48} color="#eab308" />
+                   <h2 style={{ marginTop: '1rem' }}>Favori Listeniz Boş</h2>
+                   <p style={{ color: '#888' }}>Taramalar sekmesinden fırsat ekleyin.</p>
+                </div>
+            ) : (
+                <div className="signals-grid">
+                    {favorites.map(s => renderSignalCard(s, true))}
+                </div>
+            )}
+          </>
+        )}
+
+        {activeTab === 'stats' && (
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', flexDirection: 'column' }}>
+             <PieChart size={48} color="#4ade80" />
+             <h2 style={{ marginTop: '1rem' }}>Kazanma Oranı (Win-Rate)</h2>
+             <p style={{ color: '#888' }}>Yakında aktif edilecek.</p>
+          </div>
+        )}
+
+        {activeTab === 'history' && (
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', flexDirection: 'column' }}>
+             <Clock size={48} color="#888" />
+             <h2 style={{ marginTop: '1rem' }}>Geçmiş Sinyaller</h2>
+             <p style={{ color: '#888' }}>Geçmişe dair kapalı pozisyonlar burada yer alacak.</p>
+          </div>
+        )}
+        </>
+        )}
+      </div>
+
+      {/* FLOATING ACTION BUTTON */}
+      <div className="chat-fab" onClick={() => setIsChatOpen(!isChatOpen)}>
+          {isChatOpen ? <X size={28} /> : <MessageSquare size={28} />}
+      </div>
+
+      {/* RIGHT PANEL - AI CHAT (Now Floating) */}
+      <div className={`chat-panel ${isChatOpen ? 'active' : ''}`}>
+         <div style={{ padding: '1.5rem 1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,0.02)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ background: 'rgba(59, 130, 246, 0.15)', padding: '10px', borderRadius: '12px' }}>
+                   <Bot color="#3b82f6" size={24} />
+                </div>
+                <div>
+                   <h3 style={{ fontSize: '1.1rem', letterSpacing: '0.5px' }}>Periskop AI Sohbet</h3>
+                   <p style={{ fontSize: '0.8rem', color: '#888' }}>GPT-4 Turbo ile desteklenir</p>
+                </div>
+            </div>
+            <button onClick={() => setIsChatOpen(false)} style={{ background: 'transparent', border: 'none', color: '#888', cursor: 'pointer', padding: '4px' }}>
+                <X size={24} />
+            </button>
+         </div>
+         
+         <div className="chat-messages">
+             {chatLog.map((chat, i) => (
+                 <div key={i} className={`chat-bubble ${chat.sender}`}>
+                     <p>{chat.text}</p>
+                 </div>
+             ))}
+         </div>
+         
+         <div className="chat-input-container">
+             <input 
+                type="text" 
+                className="chat-input"
+                value={chatInput} 
+                onChange={e=>setChatInput(e.target.value)} 
+                onKeyDown={e=>e.key==='Enter' && handleChat()} 
+                placeholder="Örn: BTC yarın ne olur?" 
+             />
+             <button className="chat-send-btn" onClick={handleChat} disabled={chatLoading}>
+                 {chatLoading ? <Activity size={20} className="fa-spin" /> : <Send size={20} />}
+             </button>
+         </div>
+      </div>
+    </div>
+  );
+}
