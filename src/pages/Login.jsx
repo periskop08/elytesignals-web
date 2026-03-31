@@ -6,9 +6,6 @@ export default function Login({ onLogin }) {
   const pollInterval = useRef(null);
 
   const handleTelegramAuth = async () => {
-    // Safari Popup Blocker Bypass: Synchronously open blank ref
-    const newTab = window.open('', '_blank');
-
     try {
       setConnecting(true);
       setErrorDesc('');
@@ -19,12 +16,14 @@ export default function Login({ onLogin }) {
       const sessionId = data.sessionId;
 
       const botUsername = 'ElytDev_Bot';
-      const tgUrl = `https://t.me/${botUsername}?start=${sessionId}`;
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
       
-      if (newTab) {
-          newTab.location.href = tgUrl;
+      if (isMobile) {
+          // Mobil cihazlarda arka planda boş sayfa kalmaması için direkt Native App intent'ini tetikliyoruz
+          window.location.href = `tg://resolve?domain=${botUsername}&start=${sessionId}`;
       } else {
-          window.location.href = tgUrl; // Fallback
+          // Masaüstü cihazlarda normal web versiyonunu yeni sekmede (popup engelleyici şansımızı deneyerek) açıyoruz.
+          window.open(`https://t.me/${botUsername}?start=${sessionId}`, '_blank');
       }
 
       // Poll every 3 seconds
@@ -36,9 +35,6 @@ export default function Login({ onLogin }) {
                 if (checkData.session && checkData.session.isAuthenticated === 1) {
                     clearInterval(pollInterval.current);
                     pollInterval.current = null;
-                    if (newTab && !newTab.closed) {
-                        try { newTab.close(); } catch(e) {}
-                    }
                     setConnecting(false);
                     onLogin({
                         telegramId: checkData.session.telegramId,
@@ -58,18 +54,12 @@ export default function Login({ onLogin }) {
       setTimeout(() => {
         if (pollInterval.current) {
             clearInterval(pollInterval.current);
-            if (newTab && !newTab.closed) {
-                try { newTab.close(); } catch(e) {}
-            }
             setConnecting(false);
             setErrorDesc("Bağlantı zaman aşımına uğradı, tekrar deneyin.");
         }
       }, 120000);
 
     } catch (err) {
-      if (newTab && !newTab.closed) {
-          try { newTab.close(); } catch(e) {}
-      }
       setConnecting(false);
       setErrorDesc(err.message || 'Bilinmeyen Hata');
     }
