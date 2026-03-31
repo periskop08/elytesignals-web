@@ -36,6 +36,9 @@ export default function Login({ onLogin }) {
                 if (checkData.session && checkData.session.isAuthenticated === 1) {
                     clearInterval(pollInterval.current);
                     pollInterval.current = null;
+                    if (newTab && !newTab.closed) {
+                        try { newTab.close(); } catch(e) {}
+                    }
                     setConnecting(false);
                     onLogin({
                         telegramId: checkData.session.telegramId,
@@ -55,12 +58,18 @@ export default function Login({ onLogin }) {
       setTimeout(() => {
         if (pollInterval.current) {
             clearInterval(pollInterval.current);
+            if (newTab && !newTab.closed) {
+                try { newTab.close(); } catch(e) {}
+            }
             setConnecting(false);
             setErrorDesc("Bağlantı zaman aşımına uğradı, tekrar deneyin.");
         }
       }, 120000);
 
     } catch (err) {
+      if (newTab && !newTab.closed) {
+          try { newTab.close(); } catch(e) {}
+      }
       setConnecting(false);
       setErrorDesc(err.message || 'Bilinmeyen Hata');
     }
