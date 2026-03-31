@@ -335,9 +335,9 @@ export default function Dashboard({ user, onLogout }) {
                     <p style={{ color: '#888', fontSize: '0.9rem', marginTop: '4px' }}>İzleme listenizde {favorites.length} işlem var.</p>
                   </div>
                </div>
-               {totalFavPnl !== 0 && (
+               {favorites.some(s => s.status === 'ACTIVE') && (
                    <div style={{ textAlign: 'right' }}>
-                       <span className={totalPnlBlinkClass} style={{ fontSize: '1.4rem', fontWeight: 'bold', color: totalPnlColor, textShadow: totalPnlBlinkClass ? 'none' : `0 0 10px ${totalPnlColor}40`, padding: '4px 12px', borderRadius: '8px', border: totalPnlBlinkClass ? undefined : '1px solid transparent' }}>
+                       <span className={totalPnlBlinkClass} style={{ fontSize: '1.4rem', fontWeight: 'bold', color: totalPnlColor, textShadow: totalPnlBlinkClass ? 'none' : `0 0 10px ${totalPnlColor}40`, padding: '4px 12px', borderRadius: '8px', border: totalPnlBlinkClass ? undefined : '1px solid transparent', transition: 'all 0.3s' }}>
                            {totalPnlSign}{totalFavPnl.toFixed(2)}%
                        </span>
                    </div>
