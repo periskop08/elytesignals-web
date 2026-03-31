@@ -13,7 +13,7 @@ export default function Dashboard({ user, onLogout }) {
   const [chatInput, setChatInput] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('markets');
-  const [favorites, setFavorites] = useState(() => JSON.parse(localStorage.getItem('web_favorites') || '[]'));
+  const [favorites, setFavorites] = useState([]);
   const [selectedSignal, setSelectedSignal] = useState(null);
   const [livePrices, setLivePrices] = useState({});
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -84,13 +84,27 @@ export default function Dashboard({ user, onLogout }) {
   useEffect(() => {
     fetchSignals();
     fetchPrices();
-    const interval = setInterval(fetchSignals, 60000);
+    
+    if (user && user.telegramId) {
+       axios.get(`/api/favorites/${user.telegramId}`)
+          .then(res => setFavorites(res.data))
+          .catch(err => console.error("Ağ hatası: Favoriler alınamadı", err));
+    }
+
+    const interval = setInterval(() => {
+        fetchSignals();
+        if (user && user.telegramId) {
+            axios.get(`/api/favorites/${user.telegramId}`)
+               .then(res => setFavorites(res.data))
+               .catch(e => console.error(e));
+        }
+    }, 60000);
     const priceInterval = setInterval(fetchPrices, 5000);
     return () => {
         clearInterval(interval);
         clearInterval(priceInterval);
     };
-  }, []);
+  }, [user]);
 
   const fetchSignals = async () => {
     try {
@@ -116,13 +130,27 @@ export default function Dashboard({ user, onLogout }) {
     } catch(e) {}
   };
 
-  const toggleFavorite = (signal) => {
+  const toggleFavorite = async (signal) => {
+    if (!user || !user.telegramId) return;
+    
+    // Optistic UI update
     setFavorites(prev => {
         const isFav = prev.some(f => f.id === signal.id);
-        const newFavs = isFav ? prev.filter(f => f.id !== signal.id) : [...prev, signal];
-        localStorage.setItem('web_favorites', JSON.stringify(newFavs));
-        return newFavs;
+        return isFav ? prev.filter(f => f.id !== signal.id) : [...prev, signal];
     });
+
+    try {
+        await axios.post('/api/favorites/toggle', {
+            telegramId: user.telegramId,
+            signalId: signal.id
+        });
+        
+        // Fetch to ensure full data sync (incognito status updates)
+        const res = await axios.get(`/api/favorites/${user.telegramId}`);
+        setFavorites(res.data);
+    } catch (err) {
+        console.error("Favori toggle error:", err);
+    }
   };
 
   const handleChat = async () => {
