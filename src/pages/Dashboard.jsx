@@ -12,6 +12,8 @@ export default function Dashboard({ user, onLogout }) {
   const [chatLog, setChatLog] = useState([{ sender: 'ai', text: 'Periskop AI devrede. Piyasa dalgalarını analiz edebiliriz. Hangi Coin hakkında görüş istersiniz?' }]);
   const [chatInput, setChatInput] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
+  const [stats, setStats] = useState(null);
+  const [statsLoading, setStatsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('markets');
   const [favorites, setFavorites] = useState([]);
   const [selectedSignal, setSelectedSignal] = useState(null);
@@ -105,6 +107,24 @@ export default function Dashboard({ user, onLogout }) {
         clearInterval(priceInterval);
     };
   }, [user]);
+
+  const loadStats = () => {
+      axios.get(`/api/signals/stats?ts=${Date.now()}`)
+        .then(res => {
+            setStats(res.data);
+            setStatsLoading(false);
+        })
+        .catch(err => {
+            console.error("Stats fetching error", err);
+            setStatsLoading(false);
+        });
+  };
+
+  useEffect(() => {
+     loadStats();
+     const statsInterval = setInterval(loadStats, 15000);
+     return () => clearInterval(statsInterval);
+  }, []);
 
   const fetchSignals = async () => {
     try {
@@ -500,10 +520,80 @@ export default function Dashboard({ user, onLogout }) {
         )}
 
         {activeTab === 'stats' && (
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', flexDirection: 'column' }}>
-             <PieChart size={48} color="#4ade80" />
-             <h2 style={{ marginTop: '1rem' }}>Kazanma Oranı (Win-Rate)</h2>
-             <p style={{ color: '#888' }}>Yakında aktif edilecek.</p>
+          <div className="stats-container" style={{ padding: '1rem', maxWidth: '800px', margin: '0 auto', width: '100%' }}>
+             {statsLoading || !stats ? (
+                 <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '300px' }}>
+                     <span style={{ color: '#4ade80' }}>Veriler Yükleniyor...</span>
+                 </div>
+             ) : (
+                 <>
+                    <h2 style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '8px', color: '#fff' }}>
+                        <PieChart size={28} color="#4ade80" /> Elyte Statistics
+                    </h2>
+                    <p style={{ color: '#888', fontSize: '0.85rem', marginBottom: '2rem' }}>Reports the simulated result as if every signal was traded with a fixed $30 size.</p>
+
+                    <div style={{
+                        background: '#162336', padding: '1.5rem', borderRadius: '20px', 
+                        border: '1px solid rgba(255,255,255,0.08)', marginBottom: '1.5rem',
+                        textAlign: 'center'
+                    }}>
+                        <p style={{ color: '#aaa', fontSize: '0.9rem', marginBottom: '0.5rem' }}>Simulated Wallet Growth (PnL)</p>
+                        <h1 style={{ fontSize: '2.5rem', fontWeight: 'bold', margin: 0, color: stats.totalProfit >= 0 ? '#4ade80' : '#f87171' }}>
+                            {stats.totalProfit >= 0 ? '+' : ''}${stats.totalProfit.toFixed(2)}
+                        </h1>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+                        <div style={{
+                            flex: 1, minWidth: '150px', background: '#162336', padding: '1.5rem', borderRadius: '16px',
+                            border: '1px solid rgba(255,255,255,0.05)', textAlign: 'center', position: 'relative'
+                        }}>
+                            <TrendingUp color="#4ade80" size={32} style={{ margin: '0 auto' }} />
+                            <div style={{ position: 'absolute', right: '1rem', top: '1rem', background: 'rgba(74, 222, 128, 0.15)', padding: '2px 8px', borderRadius: '6px' }}>
+                                <span style={{ color: '#4ade80', fontSize: '0.75rem', fontWeight: 'bold' }}>+%{(stats.totalWinPercentage || 0).toFixed(1)}</span>
+                            </div>
+                            <h2 style={{ margin: '1rem 0 0.25rem 0', fontSize: '1.75rem', color: '#fff' }}>{stats.wins}</h2>
+                            <p style={{ color: '#888', fontSize: '0.85rem', margin: 0 }}>Wins (TP)</p>
+                        </div>
+                        <div style={{
+                            flex: 1, minWidth: '150px', background: '#162336', padding: '1.5rem', borderRadius: '16px',
+                            border: '1px solid rgba(255,255,255,0.05)', textAlign: 'center', position: 'relative'
+                        }}>
+                            <TrendingDown color="#f87171" size={32} style={{ margin: '0 auto' }} />
+                            <div style={{ position: 'absolute', right: '1rem', top: '1rem', background: 'rgba(248, 113, 113, 0.15)', padding: '2px 8px', borderRadius: '6px' }}>
+                                <span style={{ color: '#f87171', fontSize: '0.75rem', fontWeight: 'bold' }}>-%{(stats.totalLossPercentage || 0).toFixed(1)}</span>
+                            </div>
+                            <h2 style={{ margin: '1rem 0 0.25rem 0', fontSize: '1.75rem', color: '#fff' }}>{stats.losses}</h2>
+                            <p style={{ color: '#888', fontSize: '0.85rem', margin: 0 }}>Losses (SL)</p>
+                        </div>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+                        <div style={{ flex: 1, minWidth: '150px', background: '#162336', padding: '1.5rem', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)', textAlign: 'center' }}>
+                            <Target color="#3b82f6" size={32} style={{ margin: '0 auto' }} />
+                            <h2 style={{ margin: '1rem 0 0.25rem 0', fontSize: '1.75rem', color: '#fff' }}>%{stats.winRate.toFixed(1)}</h2>
+                            <p style={{ color: '#888', fontSize: '0.85rem', margin: 0 }}>Win Rate</p>
+                        </div>
+                        <div style={{ flex: 1, minWidth: '150px', background: '#162336', padding: '1.5rem', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)', textAlign: 'center' }}>
+                            <Zap color="#eab308" size={32} style={{ margin: '0 auto' }} />
+                            <h2 style={{ margin: '1rem 0 0.25rem 0', fontSize: '1.75rem', color: '#fff' }}>{stats.totalSignals}</h2>
+                            <p style={{ color: '#888', fontSize: '0.85rem', margin: 0 }}>Total Signals</p>
+                        </div>
+                    </div>
+
+                    <div style={{
+                        background: 'rgba(234, 179, 8, 0.1)', padding: '1.5rem', borderRadius: '16px',
+                        border: '1px solid rgba(234, 179, 8, 0.3)'
+                    }}>
+                        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem', gap: '8px' }}>
+                            <span style={{ fontSize: '1.25rem' }}>✨</span>
+                            <span style={{ color: '#eab308', fontWeight: 'bold' }}>Trades Reaching +2%</span>
+                        </div>
+                        <h2 style={{ margin: '0 0 0.5rem 0', fontSize: '2rem', color: '#fff' }}>{stats.reachedTwoPercentCount} <span style={{ fontSize: '1rem', color: '#aaa', fontWeight: 'normal' }}>trades</span></h2>
+                        <p style={{ color: '#ccc', fontSize: '0.85rem', lineHeight: '1.4', margin: 0 }}>Total number of strong trades that successfully reached at least +2% profit while active, even if they eventually hit stop-loss.</p>
+                    </div>
+                 </>
+             )}
           </div>
         )}
 
