@@ -26,7 +26,7 @@ export default function Dashboard({ user, onLogout }) {
     const currentPrice = livePrices[symbolKey];
     if (!currentPrice) return 0;
     
-    const rawEntry = (s.entry || '').toString().replace(/[^0-9.]/g, '');
+    const rawEntry = (s.entry || s.entryPrice || '').toString().replace(/[^0-9.]/g, '');
     const entry = parseFloat(rawEntry) || 0;
     if (entry === 0) return 0;
 
