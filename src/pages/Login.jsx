@@ -28,6 +28,7 @@ export default function Login({ onLogin }) {
                 const checkData = await checkReq.json();
                 if (checkData.session && checkData.session.isAuthenticated === 1) {
                     clearInterval(pollInterval.current);
+                    pollInterval.current = null;
                     setConnecting(false);
                     onLogin({
                         telegramId: checkData.session.telegramId,
