@@ -35,9 +35,26 @@ export default function Dashboard({ user, onLogout }) {
   const handleTabClick = (tabName) => {
       // Çift tıkla/Aynı sekmeye basıldığında tepeye kaydır (Mobil App Davranışı)
       if (activeTab === tabName && !selectedSignal) {
-          const container = document.querySelector('.dashboard-layout');
-          if (container) container.scrollTo({ top: 0, behavior: 'smooth' });
-          window.scrollTo({ top: 0, behavior: 'smooth' });
+          try {
+             // 1. Desktop ve genel window kaydırmaları
+             document.documentElement.style.scrollBehavior = 'smooth';
+             document.body.style.scrollBehavior = 'smooth';
+             window.scrollTo(0, 0);
+             
+             // 2. Mobil dashboard flex-container scroll (Ana taşıyıcı)
+             const layout = document.querySelector('.dashboard-layout');
+             if (layout) {
+                 layout.style.scrollBehavior = 'smooth';
+                 layout.scrollTop = 0;
+             }
+             
+             // 3. Desktop orta panel kaydırması
+             const panel = document.querySelector('.signals-panel');
+             if (panel) {
+                 panel.style.scrollBehavior = 'smooth';
+                 panel.scrollTop = 0;
+             }
+          } catch(e) { console.warn("Scroll Error", e); }
       }
       setActiveTab(tabName);
       setSelectedSignal(null);
