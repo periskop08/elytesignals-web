@@ -781,23 +781,25 @@ export default function Dashboard({ user, onLogout }) {
           {isAutoPoking && !isChatOpen && (
               <div style={{
                   position: 'absolute',
-                  bottom: '100%',
-                  right: '10px',
+                  bottom: '140%', // Push it higher so it doesn't overlap the periscope head
+                  right: '0px',
                   width: '240px',
-                  background: 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)',
+                  background: 'rgba(15, 23, 42, 0.65)', // Transparent dark glassy look
+                  backdropFilter: 'blur(12px)',
+                  WebkitBackdropFilter: 'blur(12px)',
                   padding: '14px 18px',
                   borderRadius: '16px',
                   borderBottomRightRadius: '4px',
-                  color: '#fff',
+                  color: '#e2e8f0',
                   fontSize: '0.85rem',
                   lineHeight: '1.4',
-                  boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
+                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
                   zIndex: 1100,
-                  marginBottom: '20px',
+                  marginBottom: '10px',
                   animation: 'fadeIn 0.3s ease-out forwards',
-                  border: '1px solid rgba(147, 197, 253, 0.3)'
+                  border: '1px solid rgba(56, 189, 248, 0.2)'
               }}>
-                  <div style={{ fontWeight: 'bold', marginBottom: '4px', color: '#93c5fd' }}>Periskop AI</div>
+                  <div style={{ fontWeight: 'bold', marginBottom: '6px', color: '#38bdf8', letterSpacing: '0.5px' }}>Periskop AI</div>
                   Merhaba! İşlemlerinizle ilgili yardımcı olabilirim, sohbet etmek için bana tıklamanız yeterlidir.
               </div>
           )}
