@@ -30,6 +30,15 @@ export default function Dashboard({ user, onLogout }) {
   const [isHoveringChat, setIsHoveringChat] = useState(false);
   const [isAutoPoking, setIsAutoPoking] = useState(false);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [showVipModal, setShowVipModal] = useState(false);
+
+  useEffect(() => {
+     if (user && user.isVip === 0) {
+         setShowVipModal(true);
+     } else {
+         setShowVipModal(false);
+     }
+  }, [user]);
 
   // --- OTOPILOT PERISKOP POP-UP (Yarım Saatte Bir) ---
   useEffect(() => {
@@ -952,6 +961,31 @@ export default function Dashboard({ user, onLogout }) {
              <span style={{ color: activeTab === 'stats' ? '#3b82f6' : '#888' }}>İstatistik</span>
          </div>
       </div>
+
+      {showVipModal && (
+          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(13,22,35,0.92)', backdropFilter: 'blur(8px)', zIndex: 9999, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px' }}>
+             <div style={{ backgroundColor: '#162336', padding: '30px 24px', borderRadius: '24px', width: '100%', maxWidth: '400px', display: 'flex', flexDirection: 'column', alignItems: 'center', border: '1px solid #4ade80', boxShadow: '0 0 30px rgba(74, 222, 128, 0.2)' }}>
+                 <img src={user?.photo || 'https://randomuser.me/api/portraits/lego/1.jpg'} style={{ width: '80px', height: '80px', borderRadius: '40px', marginBottom: '15px', border: '2px solid #4ade80' }} alt="User Profile" />
+                 <h2 style={{ color: '#fff', fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '12px', textAlign: 'center' }}>Hoş Geldin, {user?.name}!</h2>
+                 <p style={{ color: '#aaa', fontSize: '1rem', textAlign: 'center', marginBottom: '30px', lineHeight: '1.6' }}>
+                     Elyte Signals topluluğuna katılarak canlı analizleri ve asıl bomba Setup'ları yakından takip edebilirsin.
+                 </p>
+                 <button 
+                     onClick={() => { window.open('https://t.me/+Rw9Ea6LPHFgwZDU0', '_blank'); setShowVipModal(false); }}
+                     style={{ backgroundColor: '#2AABEE', color: '#fff', border: 'none', padding: '16px 30px', borderRadius: '14px', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '1rem', fontWeight: 'bold', cursor: 'pointer', marginBottom: '16px', boxShadow: '0 4px 12px rgba(42, 171, 238, 0.3)' }}
+                 >
+                     <Send size={20} style={{ marginRight: '10px' }} /> VIP Gruba Katıl
+                 </button>
+                 <button 
+                     onClick={() => setShowVipModal(false)}
+                     style={{ background: 'transparent', border: 'none', color: '#888', fontSize: '0.9rem', cursor: 'pointer', padding: '10px' }}
+                 >
+                     Daha Sonra Belki
+                 </button>
+             </div>
+          </div>
+      )}
+
     </div>
   );
 }
