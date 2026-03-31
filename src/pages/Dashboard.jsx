@@ -58,6 +58,18 @@ export default function Dashboard({ user, onLogout }) {
       return s.status === favFilter;
   });
 
+  // Taramalar İstatistikleri
+  const activeMainSignals = signals.filter(s => s.status === 'ACTIVE');
+  const mainLongs = activeMainSignals.filter(s => s.type === 'LONG').length;
+  const mainShorts = activeMainSignals.filter(s => s.type === 'SHORT').length;
+  let mainProfitCount = 0;
+  let mainLossCount = 0;
+  activeMainSignals.forEach(s => {
+      const p = calculatePnl(s);
+      if (p > 0) mainProfitCount++;
+      else if (p < 0) mainLossCount++; 
+  });
+
   useEffect(() => {
     fetchSignals();
     fetchPrices();
@@ -298,16 +310,29 @@ export default function Dashboard({ user, onLogout }) {
           <>
             {activeTab === 'markets' && (
           <>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '1rem' }}>
-               <div>
-                   <h1 style={{ fontSize: '2rem', marginBottom: '0.5rem', fontWeight: '800' }}>Canlı Akış</h1>
-                   <p style={{ color: '#888', fontSize: '1rem' }}>Periskop yapay zeka analiz motorunun anlık tespitleri.</p>
-               </div>
-               <button onClick={fetchSignals} disabled={loading} style={{ background: 'rgba(255,255,255,0.1)', color: '#fff', border: 'none', padding: '10px 14px', borderRadius: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                   <RefreshCcw size={16} className={loading ? 'fa-spin' : ''} />
-                   <span>Yenile</span>
-               </button>
-            </div>
+             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '1rem', flexWrap: 'wrap', gap: '15px' }}>
+                <div>
+                    <h1 style={{ fontSize: '2rem', marginBottom: '0.5rem', fontWeight: '800' }}>Canlı Akış</h1>
+                    <p style={{ color: '#888', fontSize: '1rem' }}>Periskop yapay zeka analiz motorunun anlık tespitleri.</p>
+                </div>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                   <div style={{ background: 'rgba(255,255,255,0.05)', padding: '8px 14px', borderRadius: '10px', fontSize: '0.85rem' }}>
+                       <span style={{ color: '#888' }}>Aktif:</span> <span style={{ fontWeight: 'bold', fontSize: '1rem', marginLeft: '4px' }}>{activeMainSignals.length}</span>
+                   </div>
+                   <div style={{ background: 'rgba(74, 222, 128, 0.1)', padding: '8px 14px', borderRadius: '10px', fontSize: '0.85rem' }}>
+                       <span style={{ color: '#4ade80', fontWeight: 'bold' }}>{mainLongs} L</span>
+                   </div>
+                   <div style={{ background: 'rgba(248, 113, 113, 0.1)', padding: '8px 14px', borderRadius: '10px', fontSize: '0.85rem' }}>
+                       <span style={{ color: '#f87171', fontWeight: 'bold' }}>{mainShorts} S</span>
+                   </div>
+                   <div style={{ background: 'rgba(74, 222, 128, 0.15)', padding: '8px 14px', borderRadius: '10px', fontSize: '0.85rem', border: '1px solid rgba(74, 222, 128, 0.3)' }}>
+                       <span style={{ color: '#4ade80', fontWeight: 'bold' }}>{mainProfitCount} Kâr</span>
+                   </div>
+                   <div style={{ background: 'rgba(248, 113, 113, 0.15)', padding: '8px 14px', borderRadius: '10px', fontSize: '0.85rem', border: '1px solid rgba(248, 113, 113, 0.3)' }}>
+                       <span style={{ color: '#f87171', fontWeight: 'bold' }}>{mainLossCount} Zarar</span>
+                   </div>
+                </div>
+             </div>
             
             {loading ? (
                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '200px', flexDirection: 'column', gap: '15px' }}>
