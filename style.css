@@ -600,6 +600,23 @@ footer {
   animation: slideUp 0.3s forwards;
 }
 
+@media (max-width: 768px) {
+  .chat-panel {
+     top: 0;
+     left: 0;
+     right: 0;
+     bottom: unset;
+     width: 100vw;
+     height: 100vh; /* Fallback for legacy Chrome Android versions */
+     height: 100dvh; /* Dynamic viewport naturally avoids Android Keyboard overlay */
+     max-width: unset;
+     max-height: unset;
+     border-radius: 0;
+     border: none;
+     background: #0D1623; /* Solid background since it's full screen */
+  }
+}
+
 .chat-panel.active {
   display: flex;
 }
