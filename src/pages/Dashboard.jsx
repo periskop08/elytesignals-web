@@ -568,11 +568,6 @@ export default function Dashboard({ user, onLogout }) {
             <div style={{ background: 'rgba(22, 35, 54, 0.4)', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)', padding: '24px', marginBottom: '30px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                     <h3 style={{ fontSize: '1.2rem', fontWeight: '600' }}>Kişisel Performans</h3>
-                    {favFilter !== 'ALL' && (
-                        <button onClick={() => setFavFilter('ALL')} style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#3b82f6', border: 'none', padding: '6px 12px', borderRadius: '8px', fontSize: '0.8rem', cursor: 'pointer', fontWeight: 'bold' }}>
-                            Tümünü Göster
-                        </button>
-                    )}
                 </div>
                 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
