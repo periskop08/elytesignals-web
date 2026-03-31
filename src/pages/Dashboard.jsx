@@ -254,12 +254,18 @@ export default function Dashboard({ user, onLogout }) {
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
                         <span style={{ color: '#fff', fontSize: '1.2rem', fontWeight: 'bold' }}>{s.symbol}</span>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px', flexWrap: 'wrap' }}>
                             <span style={{ color: '#888', fontSize: '0.8rem' }}>{new Date(s.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
                             <div style={{ display: 'flex', alignItems: 'center', backgroundColor: 'rgba(56, 189, 248, 0.15)', padding: '2px 6px', borderRadius: '6px' }}>
                                 <Zap color="#38bdf8" size={10} fill="#38bdf8" style={{marginRight: 4}} />
                                 <span style={{color: '#38bdf8', fontSize: '0.75rem', fontWeight: 'bold'}}>{s.qualityScore || 0}</span>
                             </div>
+                            {s.dailyCount > 1 && (
+                                <div style={{ display: 'flex', alignItems: 'center', backgroundColor: 'rgba(249, 115, 22, 0.15)', padding: '2px 6px', borderRadius: '6px' }}>
+                                    <AlertTriangle color="#f97316" size={10} style={{marginRight: 4}} />
+                                    <span style={{color: '#f97316', fontSize: '0.75rem', fontWeight: 'bold'}}>Uyarı: Günün {s.dailyCount}. Sinyali</span>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
