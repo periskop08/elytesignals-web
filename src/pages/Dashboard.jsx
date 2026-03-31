@@ -12,6 +12,9 @@ export default function Dashboard({ user, onLogout }) {
   const [chatLog, setChatLog] = useState([{ sender: 'ai', text: 'Periskop AI devrede. Piyasa dalgalarını analiz edebiliriz. Hangi Coin hakkında görüş istersiniz?' }]);
   const [chatInput, setChatInput] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
+  const [stats, setStats] = useState(null);
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('markets');
   const [favorites, setFavorites] = useState([]);
   const [selectedSignal, setSelectedSignal] = useState(null);
   const [livePrices, setLivePrices] = useState({});
