@@ -86,7 +86,7 @@ export default function Dashboard({ user, onLogout }) {
     fetchPrices();
     
     if (user && user.telegramId) {
-       axios.get(`/api/favorites/${user.telegramId}`)
+       axios.get(`/api/favorites/${user.telegramId}?ts=${Date.now()}`)
           .then(res => setFavorites(res.data))
           .catch(err => console.error("Ağ hatası: Favoriler alınamadı", err));
     }
@@ -94,7 +94,7 @@ export default function Dashboard({ user, onLogout }) {
     const interval = setInterval(() => {
         fetchSignals();
         if (user && user.telegramId) {
-            axios.get(`/api/favorites/${user.telegramId}`)
+            axios.get(`/api/favorites/${user.telegramId}?ts=${Date.now()}`)
                .then(res => setFavorites(res.data))
                .catch(e => console.error(e));
         }
@@ -146,7 +146,7 @@ export default function Dashboard({ user, onLogout }) {
         });
         
         // Fetch to ensure full data sync (incognito status updates)
-        const res = await axios.get(`/api/favorites/${user.telegramId}`);
+        const res = await axios.get(`/api/favorites/${user.telegramId}?ts=${Date.now()}`);
         setFavorites(res.data);
     } catch (err) {
         console.error("Favori toggle error:", err);
