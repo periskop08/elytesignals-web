@@ -21,6 +21,8 @@ export default function Dashboard({ user, onLogout }) {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [favFilter, setFavFilter] = useState('ACTIVE');
   const [historyFilter, setHistoryFilter] = useState('WIN');
+  const [newSignalIds, setNewSignalIds] = useState([]);
+  const prevSignalsRef = useRef([]);
   const [historicalSignals, setHistoricalSignals] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [prevSignalTrades, setPrevSignalTrades] = useState([]);
@@ -203,7 +205,21 @@ export default function Dashboard({ user, onLogout }) {
   const fetchSignals = async () => {
     try {
       const res = await axios.get('/api/signals/active');
-      setSignals(res.data);
+      const newSigs = res.data;
+      
+      if (prevSignalsRef.current.length > 0 && newSigs.length > 0) {
+          const prevIds = new Set(prevSignalsRef.current.map(s => s.id));
+          const arrivals = newSigs.filter(s => !prevIds.has(s.id)).map(s => s.id);
+          
+          if (arrivals.length > 0) {
+              setNewSignalIds(prev => [...prev, ...arrivals]);
+              setTimeout(() => {
+                  setNewSignalIds(prev => prev.filter(id => !arrivals.includes(id)));
+              }, 5000);
+          }
+      }
+      prevSignalsRef.current = newSigs;
+      setSignals(newSigs);
     } catch (err) {
       console.error(err);
     } finally {
@@ -301,8 +317,10 @@ export default function Dashboard({ user, onLogout }) {
        }
     }
 
+    const isNew = newSignalIds.includes(s.id);
+
     return (
-        <div className={`signal-card ${s.type}`} key={isFavTab ? `fav-${s.id}` : s.id} style={{ padding: '16px', borderRadius: '20px', backgroundColor: '#162336', borderWidth: '1px', borderColor: 'rgba(255,255,255,0.08)', marginBottom: '4px', cursor: 'pointer' }} onClick={() => setSelectedSignal(s)}>
+        <div className={`signal-card ${s.type} ${isNew ? 'new-signal-blink' : ''}`} key={isFavTab ? `fav-${s.id}` : s.id} style={{ padding: '16px', borderRadius: '20px', backgroundColor: '#162336', borderWidth: '1px', borderColor: 'rgba(255,255,255,0.08)', marginBottom: '4px', cursor: 'pointer', position: 'relative' }} onClick={() => setSelectedSignal(s)}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                 <div style={{ display: 'flex', alignItems: 'center' }}>
                     <div style={{ width: '42px', height: '42px', borderRadius: '12px', backgroundColor: isLong ? 'rgba(74, 222, 128, 0.15)' : 'rgba(248, 113, 113, 0.15)', display: 'flex', justifyContent: 'center', alignItems: 'center', marginRight: '14px' }}>
