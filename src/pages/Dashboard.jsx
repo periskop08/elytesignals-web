@@ -3,7 +3,7 @@ import axios from 'axios';
 import { 
   Activity, Star, Clock, PieChart, 
   Send, Bot, Target, AlertTriangle, ShieldCheck, 
-  TrendingUp, TrendingDown, RefreshCcw, LogOut, Zap, ArrowLeft, MessageSquare, X
+  TrendingUp, TrendingDown, RefreshCcw, LogOut, Zap, ArrowLeft, MessageSquare, X, Rocket
 } from 'lucide-react';
 
 export default function Dashboard({ user, onLogout }) {
@@ -17,6 +17,32 @@ export default function Dashboard({ user, onLogout }) {
   const [selectedSignal, setSelectedSignal] = useState(null);
   const [livePrices, setLivePrices] = useState({});
   const [isChatOpen, setIsChatOpen] = useState(false);
+
+  // --- KİŞİSEL İSTATİSTİK HESAPLAMALARI (Favoriler için) ---
+  const calculatePnl = (s) => {
+    if (!s || s.status !== 'ACTIVE') return 0;
+    const symbolKey = s.coin ? s.coin.replace('/', '') : s.symbol.replace('/', '');
+    const currentPrice = livePrices[symbolKey];
+    if (!currentPrice) return 0;
+    
+    const rawEntry = (s.entry || '').toString().replace(/,/g, '');
+    const entry = parseFloat(rawEntry) || 0;
+    if (entry === 0) return 0;
+
+    return (s.type === 'LONG') 
+        ? ((currentPrice - entry) / entry) * 100
+        : ((entry - currentPrice) / entry) * 100;
+  };
+
+  const totalWins = favorites.filter(sig => sig.status === 'WIN').length;
+  const totalLosses = favorites.filter(sig => sig.status === 'LOSS').length;
+  const closedSignals = totalWins + totalLosses;
+  const winRate = closedSignals > 0 ? ((totalWins / closedSignals) * 100).toFixed(1) : 0;
+  
+  const reachedTwoPercentCount = favorites.filter(sig => calculatePnl(sig) >= 2.0).length;
+  const totalFavPnl = favorites.reduce((acc, curr) => acc + calculatePnl(curr), 0);
+  const totalPnlColor = totalFavPnl >= 0 ? '#4ade80' : '#f87171';
+  let totalPnlSign = totalFavPnl >= 0 ? '+' : '';
 
   useEffect(() => {
     fetchSignals();
@@ -285,25 +311,89 @@ export default function Dashboard({ user, onLogout }) {
         )}
 
         {activeTab === 'favorites' && (
-          <>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '1rem' }}>
-              <div>
-                 <h1 style={{ fontSize: '2rem', marginBottom: '0.5rem', fontWeight: '800' }}>Favoriler</h1>
-                 <p style={{ color: '#888', fontSize: '1rem' }}>Sizin için önemli olan sinyalleri yıldızlıyorsunuz.</p>
-              </div>
+          <div style={{ animation: 'slideIn 0.3s forwards' }}>
+            {/* FAVORITES HEADER (User Info & Total PnL) */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+               <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                  <img src={user.photo || 'https://randomuser.me/api/portraits/lego/1.jpg'} style={{ width: 50, height: 50, borderRadius: 25, border: '2px solid rgba(255,255,255,0.1)' }}/>
+                  <div>
+                    <h1 style={{ fontSize: '1.6rem', fontWeight: '800', lineHeight: 1 }}>{user.name}</h1>
+                    <p style={{ color: '#888', fontSize: '0.9rem', marginTop: '4px' }}>İzleme listenizde {favorites.length} işlem var.</p>
+                  </div>
+               </div>
+               {totalFavPnl !== 0 && (
+                   <div style={{ textAlign: 'right' }}>
+                       <span style={{ fontSize: '1.4rem', fontWeight: 'bold', color: totalPnlColor, textShadow: `0 0 10px ${totalPnlColor}40` }}>
+                           {totalPnlSign}{totalFavPnl.toFixed(2)}%
+                       </span>
+                   </div>
+               )}
             </div>
+
+            {/* PERSONAL PERFORMANCE GRID */}
+            <div style={{ background: 'rgba(22, 35, 54, 0.4)', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)', padding: '24px', marginBottom: '30px' }}>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: '600', marginBottom: '20px' }}>Kişisel Performans</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    
+                    {/* TP Hit */}
+                    <div style={{ background: 'rgba(255,255,255,0.03)', padding: '20px', borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                        <div style={{ background: 'rgba(74, 222, 128, 0.15)', padding: '12px', borderRadius: '12px' }}>
+                            <TrendingUp color="#4ade80" size={24} />
+                        </div>
+                        <div>
+                            <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{totalWins}</div>
+                            <div style={{ fontSize: '0.85rem', color: '#888' }}>TP Hit</div>
+                        </div>
+                    </div>
+
+                    {/* SL Hit */}
+                    <div style={{ background: 'rgba(255,255,255,0.03)', padding: '20px', borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                        <div style={{ background: 'rgba(248, 113, 113, 0.15)', padding: '12px', borderRadius: '12px' }}>
+                            <TrendingDown color="#f87171" size={24} />
+                        </div>
+                        <div>
+                            <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{totalLosses}</div>
+                            <div style={{ fontSize: '0.85rem', color: '#888' }}>SL Hit</div>
+                        </div>
+                    </div>
+
+                    {/* Win Rate */}
+                    <div style={{ background: 'rgba(255,255,255,0.03)', padding: '20px', borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                        <div style={{ background: 'rgba(234, 179, 8, 0.15)', padding: '12px', borderRadius: '12px' }}>
+                            <Target color="#eab308" size={24} />
+                        </div>
+                        <div>
+                            <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>%{winRate}</div>
+                            <div style={{ fontSize: '0.85rem', color: '#888' }}>Kazanma Oranı</div>
+                        </div>
+                    </div>
+
+                    {/* +%2 Actives */}
+                    <div style={{ background: 'rgba(255,255,255,0.03)', padding: '20px', borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                        <div style={{ background: 'rgba(56, 189, 248, 0.15)', padding: '12px', borderRadius: '12px' }}>
+                            <Rocket color="#38bdf8" size={24} />
+                        </div>
+                        <div>
+                            <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{reachedTwoPercentCount}</div>
+                            <div style={{ fontSize: '0.85rem', color: '#888' }}>+%2 Kârdakiler</div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
             {favorites.length === 0 ? (
-                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60%', flexDirection: 'column' }}>
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '200px', flexDirection: 'column' }}>
                    <Star size={48} color="#eab308" />
                    <h2 style={{ marginTop: '1rem' }}>Favori Listeniz Boş</h2>
                    <p style={{ color: '#888' }}>Taramalar sekmesinden fırsat ekleyin.</p>
                 </div>
             ) : (
                 <div className="signals-grid">
-                    {favorites.map(s => renderSignalCard(s, true))}
+                   {favorites.map(s => renderSignalCard(s, true))}
                 </div>
             )}
-          </>
+          </div>
         )}
 
         {activeTab === 'stats' && (
