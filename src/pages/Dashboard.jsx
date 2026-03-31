@@ -25,6 +25,8 @@ export default function Dashboard({ user, onLogout }) {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [prevSignalTrades, setPrevSignalTrades] = useState([]);
   const [prevSignalLoading, setPrevSignalLoading] = useState(false);
+  const [isHoveringChat, setIsHoveringChat] = useState(false);
+  const [mousePos, setMousePos] = useState(0);
 
   // --- KİŞİSEL İSTATİSTİK HESAPLAMALARI (Favoriler için) ---
   const calculatePnl = (s) => {
@@ -746,9 +748,55 @@ export default function Dashboard({ user, onLogout }) {
         )}
       </div>
 
-      {/* FLOATING ACTION BUTTON */}
-      <div className="chat-fab" onClick={() => setIsChatOpen(!isChatOpen)}>
-          {isChatOpen ? <X size={28} /> : <MessageSquare size={28} />}
+      {/* FLOATING ACTION BUTTON WITH ANIMATED PERISCOPE */}
+      <div 
+         className="chat-fab-wrapper"
+         style={{ position: 'fixed', bottom: '24px', right: '24px', width: '60px', height: '60px', zIndex: 1000 }}
+         onMouseEnter={() => setIsHoveringChat(true)}
+         onMouseLeave={() => { setIsHoveringChat(false); setMousePos(0); }}
+         onMouseMove={(e) => {
+            const rect = e.currentTarget.getBoundingClientRect();
+            // xOffset ranges approximately from -30 to 30
+            const xOffset = e.clientX - rect.left - rect.width / 2;
+            setMousePos(xOffset); 
+         }}
+      >
+          {/* THE PERISCOPE BOT INCORPORATION */}
+          <div 
+             style={{
+                position: 'absolute',
+                top: 0,
+                left: '5px',
+                width: '50px',
+                height: '70px',
+                background: 'transparent',
+                transition: 'transform 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28), opacity 0.3s',
+                transform: (isHoveringChat && !isChatOpen) ? `translateY(-65px)` : 'translateY(15px)',
+                opacity: (isHoveringChat && !isChatOpen) ? 1 : 0,
+                zIndex: -1,
+                pointerEvents: 'none'
+             }}
+          >
+              <svg viewBox="0 0 100 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  {/* Body Neck/Tube */}
+                  <rect x="35" y="45" width="30" height="75" rx="5" fill="#162336" stroke="#3b82f6" strokeWidth="4"/>
+                  {/* Robot Head */}
+                  <rect x="15" y="10" width="70" height="45" rx="15" fill="#162336" stroke="#3b82f6" strokeWidth="4"/>
+                  {/* Dynamic Interactive Eye */}
+                  <circle cx={50 + (mousePos / 2.5)} cy="30" r="14" fill="#1e293b" />
+                  <circle cx={50 + (mousePos / 2.5)} cy="30" r="8" fill="#4ade80" style={{ filter: 'drop-shadow(0 0 4px #4ade80)' }} />
+                  <circle cx={50 + (mousePos / 2.5)} cy="30" r="3" fill="#fff" />
+              </svg>
+          </div>
+
+          {/* WRAPPED CHAT TRIGGER */}
+          <div 
+             className="chat-fab" 
+             onClick={() => setIsChatOpen(!isChatOpen)}
+             style={{ position: 'relative', bottom: 'auto', right: 'auto', margin: 0 }}
+          >
+              {isChatOpen ? <X size={28} /> : <MessageSquare size={28} />}
+          </div>
       </div>
 
       {/* RIGHT PANEL - AI CHAT (Now Floating) */}
