@@ -765,26 +765,57 @@ export default function Dashboard({ user, onLogout }) {
           <div 
              style={{
                 position: 'absolute',
-                top: '-10px',
-                left: '-10px',
-                width: '80px',
+                top: 0,
+                left: '2px',
+                width: '56px',
                 height: '80px',
-                background: '#162336',
-                borderRadius: '50%',
-                border: '2px solid #3b82f6',
-                boxShadow: '0 0 15px rgba(59, 130, 246, 0.5)',
-                transition: 'transform 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28), opacity 0.3s',
-                transform: (isHoveringChat && !isChatOpen) ? `translateY(-75px) rotate(${mousePos / 3}deg)` : 'translateY(15px) rotate(0deg)',
+                background: 'transparent',
+                transition: 'transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s',
+                transform: (isHoveringChat && !isChatOpen) ? `translateY(-75px)` : 'translateY(15px)',
                 opacity: (isHoveringChat && !isChatOpen) ? 1 : 0,
                 zIndex: -1,
                 pointerEvents: 'none',
-                overflow: 'hidden',
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center'
              }}
           >
-              <img src="/bot.jpg" alt="AI Bot" style={{ width: '120%', height: '120%', objectFit: 'cover' }} />
+              <svg viewBox="0 0 100 150" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ filter: 'drop-shadow(0px 8px 12px rgba(0,0,0,0.5))' }}>
+                  <defs>
+                      <linearGradient id="metal" x1="0%" y1="0%" x2="100%" y2="0%">
+                          <stop offset="0%" stopColor="#475569" />
+                          <stop offset="50%" stopColor="#94a3b8" />
+                          <stop offset="100%" stopColor="#334155" />
+                      </linearGradient>
+                      <linearGradient id="lens" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor="#0ea5e9" />
+                          <stop offset="100%" stopColor="#1e3a8a" />
+                      </linearGradient>
+                  </defs>
+
+                  {/* Base / Neck emerging from button */}
+                  <path d="M 35 150 L 35 70 C 35 60, 65 60, 65 70 L 65 150 Z" fill="url(#metal)" />
+                  
+                  {/* Neck horizontal joints */}
+                  <rect x="32" y="110" width="36" height="6" rx="3" fill="#1e293b" />
+                  <rect x="32" y="130" width="36" height="6" rx="3" fill="#1e293b" />
+                  <rect x="32" y="90" width="36" height="6" rx="3" fill="#1e293b" />
+
+                  {/* Main Head that rotates */}
+                  <g style={{ transform: `rotate(${mousePos / 2.5}deg)`, transformOrigin: '50px 50px', transition: 'transform 0.1s linear' }}>
+                      {/* Outer Head casing */}
+                      <rect x="10" y="20" width="80" height="60" rx="30" fill="url(#metal)" stroke="#1e293b" strokeWidth="3" />
+                      
+                      {/* Inner black lens housing */}
+                      <circle cx="50" cy="50" r="22" fill="#0f172a" stroke="#475569" strokeWidth="3" />
+                      
+                      {/* Blue Glowing Lens */}
+                      <circle cx="50" cy="50" r="16" fill="url(#lens)" />
+                      
+                      {/* Inner cyan glowing pupil moving slightly with mousePos */}
+                      <circle cx={50 + (mousePos/5)} cy="50" r="6" fill="#22d3ee" style={{ filter: 'drop-shadow(0 0 4px #22d3ee)' }} />
+                      
+                      {/* Lens reflection (highlight) */}
+                      <path d="M 40 40 Q 50 32 60 40 A 14 14 0 0 0 40 40" fill="rgba(255,255,255,0.4)" />
+                  </g>
+              </svg>
           </div>
 
           {/* WRAPPED CHAT TRIGGER */}
