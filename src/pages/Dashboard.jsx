@@ -353,10 +353,13 @@ export default function Dashboard({ user, onLogout }) {
       
       {/* SIDEBAR */}
       <div className="sidebar">
-        <div style={{ padding: '2rem 1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ background: 'rgba(74, 222, 128, 0.15)', padding: '10px', borderRadius: '12px' }}>
-            <Activity color="#4ade80" size={28} />
-          </div>
+        <div 
+          onClick={() => setActiveTab('markets')}
+          style={{ padding: '2rem 1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', transition: 'opacity 0.2s' }}
+          onMouseOver={(e) => e.currentTarget.style.opacity = '0.8'}
+          onMouseOut={(e) => e.currentTarget.style.opacity = '1'}
+        >
+          <img src="/logo.jpg" alt="Elyte Logo" style={{ width: '48px', height: '48px', borderRadius: '14px', objectFit: 'cover', border: '1px solid rgba(74, 222, 128, 0.3)', boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }} />
           <h2 style={{ letterSpacing: 1, fontSize: '1.4rem' }}>ELYTE</h2>
         </div>
         
