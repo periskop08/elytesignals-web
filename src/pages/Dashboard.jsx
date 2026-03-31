@@ -3,7 +3,7 @@ import axios from 'axios';
 import { 
   Activity, Star, Clock, PieChart, 
   Send, Bot, Target, AlertTriangle, ShieldCheck, 
-  TrendingUp, TrendingDown, RefreshCcw, LogOut, Zap, ArrowLeft, MessageSquare, X, Rocket
+  TrendingUp, TrendingDown, RefreshCcw, LogOut, Zap, ArrowLeft, MessageSquare, X, Rocket, History
 } from 'lucide-react';
 
 export default function Dashboard({ user, onLogout }) {
@@ -23,6 +23,8 @@ export default function Dashboard({ user, onLogout }) {
   const [historyFilter, setHistoryFilter] = useState('WIN');
   const [historicalSignals, setHistoricalSignals] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [prevSignalTrades, setPrevSignalTrades] = useState([]);
+  const [prevSignalLoading, setPrevSignalLoading] = useState(false);
 
   // --- KİŞİSEL İSTATİSTİK HESAPLAMALARI (Favoriler için) ---
   const calculatePnl = (s) => {
@@ -110,6 +112,43 @@ export default function Dashboard({ user, onLogout }) {
         clearInterval(priceInterval);
     };
   }, [user]);
+
+  useEffect(() => {
+     if (selectedSignal) {
+         setPrevSignalLoading(true);
+         const symbol = (selectedSignal.coin || selectedSignal.symbol).replace('/', '');
+         axios.get(`/api/signals/history?symbol=${symbol}&ts=${Date.now()}`)
+            .then(res => {
+                const closedTrades = res.data.filter(d => d.id.toString() !== selectedSignal.id.toString());
+                if (closedTrades.length > 0) {
+                    const processed = closedTrades.map(pt => {
+                        const rawEntry = (pt.entryPrice || pt.entry || '').toString().replace(/[^0-9.]/g, '');
+                        const entry = parseFloat(rawEntry);
+                        let diff = 0;
+                        if (pt.status === 'WIN') {
+                            const rawTarget = (pt.targetPrice || pt.target || '').toString().replace(/[^0-9.]/g, '');
+                            const target = parseFloat(rawTarget);
+                            diff = pt.type === 'LONG' ? ((target - entry) / entry) * 100 : ((entry - target) / entry) * 100;
+                        } else if (pt.status === 'LOSS') {
+                            const rawStop = (pt.stopPrice || pt.stop || '').toString().replace(/[^0-9.]/g, '');
+                            const stop = parseFloat(rawStop);
+                            diff = pt.type === 'LONG' ? ((stop - entry) / entry) * 100 : ((entry - stop) / entry) * 100;
+                        }
+                        pt.calculatedPnl = diff.toFixed(2);
+                        return pt;
+                    });
+                    setPrevSignalTrades(processed);
+                } else {
+                    setPrevSignalTrades([]);
+                }
+            })
+            .catch(console.error)
+            .finally(() => setPrevSignalLoading(false));
+     } else {
+         setPrevSignalTrades([]);
+         setPrevSignalLoading(false);
+     }
+  }, [selectedSignal]);
 
   const loadStats = () => {
       axios.get(`/api/signals/stats?ts=${Date.now()}`)
@@ -384,6 +423,51 @@ export default function Dashboard({ user, onLogout }) {
                         ></iframe>
                     </div>
                 </div>
+
+                {/* PREVIOUS TRADES HISTORY (Conditionally Displayed if fetched) */}
+                {prevSignalLoading ? (
+                    <div style={{ padding: '24px', textAlign: 'center', color: '#888' }}>Geçmiş Sinyaller Yükleniyor...</div>
+                ) : prevSignalTrades.length > 0 ? (
+                    <div style={{ marginTop: '24px', background: 'rgba(22, 35, 54, 0.4)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden' }}>
+                        <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                            <h3 style={{ fontSize: '1.1rem', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                               <History size={18} color="#888" /> 
+                               Önceki İşlemler (Sinyal Geçmişi)
+                            </h3>
+                        </div>
+                        <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                            {prevSignalTrades.map((pt, i) => (
+                                <div key={pt.id || i} style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '12px', padding: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '10px' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <span style={{ color: '#888', fontWeight: 'bold' }}>Geçmiş #{i + 1}</span>
+                                            <span style={{ color: pt.type === 'LONG'? '#4ade80' : '#f87171', fontWeight: 'bold', padding: '2px 8px', background: pt.type === 'LONG' ? 'rgba(74,222,128,0.1)' : 'rgba(248,113,113,0.1)', borderRadius: '6px' }}>{pt.type}</span>
+                                        </div>
+                                        <div style={{ color: pt.status === 'WIN' ? '#4ade80' : '#f87171', fontWeight: 'bold', fontSize: '0.9rem', background: pt.status === 'WIN' ? 'rgba(74,222,128,0.15)' : 'rgba(248,113,113,0.15)', padding: '4px 10px', borderRadius: '8px' }}>
+                                            {pt.status === 'WIN' ? 'KAZANÇ (TP)' : 'KAYIP (SL)'} ({parseFloat(pt.calculatedPnl) > 0 ? '+' : ''}{pt.calculatedPnl}%)
+                                        </div>
+                                    </div>
+                                    
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '12px' }}>
+                                        <div style={{ textAlign: 'left' }}>
+                                            <div style={{ color: '#888', fontSize: '0.75rem', marginBottom: '4px' }}>Giriş</div>
+                                            <div style={{ color: '#fff', fontWeight: 'bold' }}>${parseFloat(pt.entryPrice || pt.entry || 0).toLocaleString('en-US', {maximumFractionDigits:5})}</div>
+                                        </div>
+                                        <div style={{ textAlign: 'center' }}>
+                                            <div style={{ color: '#888', fontSize: '0.75rem', marginBottom: '4px' }}>Hedef</div>
+                                            <div style={{ color: '#4ade80', fontWeight: 'bold' }}>${parseFloat(pt.targetPrice || pt.target || 0).toLocaleString('en-US', {maximumFractionDigits:5})}</div>
+                                        </div>
+                                        <div style={{ textAlign: 'right' }}>
+                                            <div style={{ color: '#888', fontSize: '0.75rem', marginBottom: '4px' }}>Stop</div>
+                                            <div style={{ color: '#f87171', fontWeight: 'bold' }}>${parseFloat(pt.stopPrice || pt.stop || 0).toLocaleString('en-US', {maximumFractionDigits:5})}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                ) : null}
+
             </div>
         ) : (
           <>
