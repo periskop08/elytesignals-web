@@ -388,7 +388,7 @@ export default function Dashboard({ user, onLogout }) {
       
       {/* MOBILE TOP HEADER */}
       <div className="mobile-top-header">
-         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }} onClick={() => setActiveTab('markets')}>
+         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }} onClick={() => { setActiveTab('markets'); setSelectedSignal(null); }}>
             <img src="/logo.jpg" alt="Elyte Logo" style={{ width: '36px', height: '36px', borderRadius: '10px', border: '1px solid rgba(74, 222, 128, 0.3)' }} />
             <h2 style={{ letterSpacing: 1, fontSize: '1.2rem', margin: 0, color: '#fff' }}>ELYTE</h2>
          </div>
@@ -403,7 +403,7 @@ export default function Dashboard({ user, onLogout }) {
       {/* SIDEBAR */}
       <div className="sidebar">
         <div 
-          onClick={() => setActiveTab('markets')}
+          onClick={() => { setActiveTab('markets'); setSelectedSignal(null); }}
           style={{ padding: '2rem 1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', transition: 'opacity 0.2s' }}
           onMouseOver={(e) => e.currentTarget.style.opacity = '0.8'}
           onMouseOut={(e) => e.currentTarget.style.opacity = '1'}
@@ -415,15 +415,15 @@ export default function Dashboard({ user, onLogout }) {
         <div style={{ padding: '1.5rem 0', flex: 1, display: 'flex', flexDirection: 'column' }}>
             <p style={{ color: '#666', fontSize: '0.75rem', marginBottom: '1rem', textTransform: 'uppercase', letterSpacing: '1px', paddingLeft: '24px' }}>ANA MENÜ</p>
             
-            <div className={`sidebar-nav-item ${activeTab === 'markets' ? 'active' : ''}`} onClick={() => setActiveTab('markets')}>
+            <div className={`sidebar-nav-item ${activeTab === 'markets' ? 'active' : ''}`} onClick={() => { setActiveTab('markets'); setSelectedSignal(null); }}>
                <Activity size={20} />
                <span>Taramalar</span>
             </div>
-            <div className={`sidebar-nav-item ${activeTab === 'favorites' ? 'active' : ''}`} onClick={() => setActiveTab('favorites')}>
+            <div className={`sidebar-nav-item ${activeTab === 'favorites' ? 'active' : ''}`} onClick={() => { setActiveTab('favorites'); setSelectedSignal(null); }}>
                <Star size={20} />
                <span>Favoriler</span>
             </div>
-            <div className={`sidebar-nav-item ${activeTab === 'stats' ? 'active' : ''}`} onClick={() => setActiveTab('stats')}>
+            <div className={`sidebar-nav-item ${activeTab === 'stats' ? 'active' : ''}`} onClick={() => { setActiveTab('stats'); setSelectedSignal(null); }}>
                <PieChart size={20} />
                <span>İstatistikler</span>
             </div>
@@ -939,15 +939,15 @@ export default function Dashboard({ user, onLogout }) {
 
       {/* MOBILE BOTTOM NAV */}
       <div className="mobile-bottom-nav">
-         <div className={`bottom-nav-item ${activeTab === 'markets' ? 'active' : ''}`} onClick={() => setActiveTab('markets')}>
+         <div className={`bottom-nav-item ${activeTab === 'markets' ? 'active' : ''}`} onClick={() => { setActiveTab('markets'); setSelectedSignal(null); }}>
              <Activity size={24} color={activeTab === 'markets' ? '#4ade80' : '#888'} />
              <span style={{ color: activeTab === 'markets' ? '#4ade80' : '#888' }}>Taramalar</span>
          </div>
-         <div className={`bottom-nav-item ${activeTab === 'favorites' ? 'active' : ''}`} onClick={() => setActiveTab('favorites')}>
+         <div className={`bottom-nav-item ${activeTab === 'favorites' ? 'active' : ''}`} onClick={() => { setActiveTab('favorites'); setSelectedSignal(null); }}>
              <Star size={24} color={activeTab === 'favorites' ? '#eab308' : '#888'} />
              <span style={{ color: activeTab === 'favorites' ? '#eab308' : '#888' }}>Favoriler</span>
          </div>
-         <div className={`bottom-nav-item ${activeTab === 'stats' ? 'active' : ''}`} onClick={() => setActiveTab('stats')}>
+         <div className={`bottom-nav-item ${activeTab === 'stats' ? 'active' : ''}`} onClick={() => { setActiveTab('stats'); setSelectedSignal(null); }}>
              <PieChart size={24} color={activeTab === 'stats' ? '#3b82f6' : '#888'} />
              <span style={{ color: activeTab === 'stats' ? '#3b82f6' : '#888' }}>İstatistik</span>
          </div>
