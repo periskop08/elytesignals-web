@@ -26,7 +26,22 @@ export default function Dashboard({ user, onLogout }) {
   const [prevSignalTrades, setPrevSignalTrades] = useState([]);
   const [prevSignalLoading, setPrevSignalLoading] = useState(false);
   const [isHoveringChat, setIsHoveringChat] = useState(false);
+  const [isAutoPoking, setIsAutoPoking] = useState(false);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+
+  // --- OTOPILOT PERISKOP POP-UP (Yarım Saatte Bir) ---
+  useEffect(() => {
+    const pokeTimer = setInterval(() => {
+      // Eğer sohbet açık değilse ve kullanıcı o an fareyle üstünde değilse çıkar.
+      if (!isChatOpen && !isHoveringChat) {
+        setIsAutoPoking(true);
+        // 5 saniye sonra gizle
+        setTimeout(() => setIsAutoPoking(false), 5000);
+      }
+    }, 30 * 60 * 1000); // 30 dakika
+
+    return () => clearInterval(pokeTimer);
+  }, [isChatOpen, isHoveringChat]);
 
   // --- KİŞİSEL İSTATİSTİK HESAPLAMALARI (Favoriler için) ---
   const calculatePnl = (s) => {
@@ -762,6 +777,31 @@ export default function Dashboard({ user, onLogout }) {
             setMousePos({ x: xOffset, y: yOffset }); 
          }}
       >
+          {/* AUTO-POKE SPEECH BUBBLE */}
+          {isAutoPoking && !isChatOpen && (
+              <div style={{
+                  position: 'absolute',
+                  bottom: '100%',
+                  right: '10px',
+                  width: '240px',
+                  background: 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)',
+                  padding: '14px 18px',
+                  borderRadius: '16px',
+                  borderBottomRightRadius: '4px',
+                  color: '#fff',
+                  fontSize: '0.85rem',
+                  lineHeight: '1.4',
+                  boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
+                  zIndex: 1100,
+                  marginBottom: '20px',
+                  animation: 'fadeIn 0.3s ease-out forwards',
+                  border: '1px solid rgba(147, 197, 253, 0.3)'
+              }}>
+                  <div style={{ fontWeight: 'bold', marginBottom: '4px', color: '#93c5fd' }}>Periskop AI</div>
+                  Merhaba! İşlemlerinizle ilgili yardımcı olabilirim, sohbet etmek için bana tıklamanız yeterlidir.
+              </div>
+          )}
+
           {/* THE PERISCOPE BOT INCORPORATION */}
           <div 
              style={{
@@ -772,8 +812,8 @@ export default function Dashboard({ user, onLogout }) {
                 height: '80px',
                 background: 'transparent',
                 transition: 'transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s',
-                transform: (isHoveringChat && !isChatOpen) ? `translateY(-75px)` : 'translateY(15px)',
-                opacity: (isHoveringChat && !isChatOpen) ? 1 : 0,
+                transform: ((isHoveringChat || isAutoPoking) && !isChatOpen) ? `translateY(-75px)` : 'translateY(15px)',
+                opacity: ((isHoveringChat || isAutoPoking) && !isChatOpen) ? 1 : 0,
                 zIndex: -1,
                 pointerEvents: 'none',
              }}
