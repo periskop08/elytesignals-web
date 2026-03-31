@@ -6,6 +6,9 @@ export default function Login({ onLogin }) {
   const pollInterval = useRef(null);
 
   const handleTelegramAuth = async () => {
+    // Safari Popup Blocker Bypass: Synchronously open blank ref
+    const newTab = window.open('', '_blank');
+
     try {
       setConnecting(true);
       setErrorDesc('');
@@ -16,9 +19,13 @@ export default function Login({ onLogin }) {
       const sessionId = data.sessionId;
 
       const botUsername = 'ElytDev_Bot';
+      const tgUrl = `https://t.me/${botUsername}?start=${sessionId}`;
       
-      // Open telegram link in new tab
-      window.open(`https://t.me/${botUsername}?start=${sessionId}`, '_blank');
+      if (newTab) {
+          newTab.location.href = tgUrl;
+      } else {
+          window.location.href = tgUrl; // Fallback
+      }
 
       // Poll every 3 seconds
       pollInterval.current = setInterval(async () => {
