@@ -386,6 +386,20 @@ export default function Dashboard({ user, onLogout }) {
   return (
     <div className="dashboard-layout">
       
+      {/* MOBILE TOP HEADER */}
+      <div className="mobile-top-header">
+         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }} onClick={() => setActiveTab('markets')}>
+            <img src="/logo.jpg" alt="Elyte Logo" style={{ width: '36px', height: '36px', borderRadius: '10px', border: '1px solid rgba(74, 222, 128, 0.3)' }} />
+            <h2 style={{ letterSpacing: 1, fontSize: '1.2rem', margin: 0, color: '#fff' }}>ELYTE</h2>
+         </div>
+         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <img src={user.photo || 'https://randomuser.me/api/portraits/lego/1.jpg'} style={{ width: 34, height: 34, borderRadius: 17, border: '2px solid rgba(255,255,255,0.1)' }}/>
+            <button onClick={onLogout} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '4px', display: 'flex' }}>
+                <LogOut size={22} />
+            </button>
+         </div>
+      </div>
+
       {/* SIDEBAR */}
       <div className="sidebar">
         <div 
@@ -920,6 +934,22 @@ export default function Dashboard({ user, onLogout }) {
              <button className="chat-send-btn" onClick={handleChat} disabled={chatLoading}>
                  {chatLoading ? <Activity size={20} className="fa-spin" /> : <Send size={20} />}
              </button>
+         </div>
+      </div>
+
+      {/* MOBILE BOTTOM NAV */}
+      <div className="mobile-bottom-nav">
+         <div className={`bottom-nav-item ${activeTab === 'markets' ? 'active' : ''}`} onClick={() => setActiveTab('markets')}>
+             <Activity size={24} color={activeTab === 'markets' ? '#4ade80' : '#888'} />
+             <span style={{ color: activeTab === 'markets' ? '#4ade80' : '#888' }}>Taramalar</span>
+         </div>
+         <div className={`bottom-nav-item ${activeTab === 'favorites' ? 'active' : ''}`} onClick={() => setActiveTab('favorites')}>
+             <Star size={24} color={activeTab === 'favorites' ? '#eab308' : '#888'} />
+             <span style={{ color: activeTab === 'favorites' ? '#eab308' : '#888' }}>Favoriler</span>
+         </div>
+         <div className={`bottom-nav-item ${activeTab === 'stats' ? 'active' : ''}`} onClick={() => setActiveTab('stats')}>
+             <PieChart size={24} color={activeTab === 'stats' ? '#3b82f6' : '#888'} />
+             <span style={{ color: activeTab === 'stats' ? '#3b82f6' : '#888' }}>İstatistik</span>
          </div>
       </div>
     </div>
