@@ -17,6 +17,7 @@ export default function Dashboard({ user, onLogout }) {
   const [selectedSignal, setSelectedSignal] = useState(null);
   const [livePrices, setLivePrices] = useState({});
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [favFilter, setFavFilter] = useState('ALL');
 
   // --- KİŞİSEL İSTATİSTİK HESAPLAMALARI (Favoriler için) ---
   const calculatePnl = (s) => {
@@ -43,6 +44,19 @@ export default function Dashboard({ user, onLogout }) {
   const totalFavPnl = favorites.reduce((acc, curr) => acc + calculatePnl(curr), 0);
   const totalPnlColor = totalFavPnl >= 0 ? '#4ade80' : '#f87171';
   let totalPnlSign = totalFavPnl >= 0 ? '+' : '';
+  
+  let totalPnlBlinkClass = '';
+  if (Math.abs(totalFavPnl) >= 5) {
+      totalPnlBlinkClass = totalFavPnl >= 0 ? 'blink-speed-3' : 'blink-speed-3-loss';
+  } else if (Math.abs(totalFavPnl) >= 3) {
+      totalPnlBlinkClass = totalFavPnl >= 0 ? 'blink-speed-1' : 'blink-speed-1-loss';
+  }
+
+  // Sinyal Filitreleme
+  const displayedFavorites = favorites.filter(s => {
+      if (favFilter === 'ALL') return true;
+      return s.status === favFilter;
+  });
 
   useEffect(() => {
     fetchSignals();
@@ -323,7 +337,7 @@ export default function Dashboard({ user, onLogout }) {
                </div>
                {totalFavPnl !== 0 && (
                    <div style={{ textAlign: 'right' }}>
-                       <span style={{ fontSize: '1.4rem', fontWeight: 'bold', color: totalPnlColor, textShadow: `0 0 10px ${totalPnlColor}40` }}>
+                       <span className={totalPnlBlinkClass} style={{ fontSize: '1.4rem', fontWeight: 'bold', color: totalPnlColor, textShadow: totalPnlBlinkClass ? 'none' : `0 0 10px ${totalPnlColor}40`, padding: '4px 12px', borderRadius: '8px', border: totalPnlBlinkClass ? undefined : '1px solid transparent' }}>
                            {totalPnlSign}{totalFavPnl.toFixed(2)}%
                        </span>
                    </div>
@@ -332,11 +346,22 @@ export default function Dashboard({ user, onLogout }) {
 
             {/* PERSONAL PERFORMANCE GRID */}
             <div style={{ background: 'rgba(22, 35, 54, 0.4)', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)', padding: '24px', marginBottom: '30px' }}>
-                <h3 style={{ fontSize: '1.2rem', fontWeight: '600', marginBottom: '20px' }}>Kişisel Performans</h3>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                    <h3 style={{ fontSize: '1.2rem', fontWeight: '600' }}>Kişisel Performans</h3>
+                    {favFilter !== 'ALL' && (
+                        <button onClick={() => setFavFilter('ALL')} style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#3b82f6', border: 'none', padding: '6px 12px', borderRadius: '8px', fontSize: '0.8rem', cursor: 'pointer', fontWeight: 'bold' }}>
+                            Tümünü Göster
+                        </button>
+                    )}
+                </div>
+                
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                     
                     {/* TP Hit */}
-                    <div style={{ background: 'rgba(255,255,255,0.03)', padding: '20px', borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    <div 
+                        onClick={() => setFavFilter('WIN')}
+                        style={{ background: favFilter === 'WIN' ? 'rgba(74, 222, 128, 0.1)' : 'rgba(255,255,255,0.03)', border: favFilter === 'WIN' ? '1px solid rgba(74, 222, 128, 0.3)' : '1px solid transparent', padding: '20px', borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '16px', cursor: 'pointer', transition: 'all 0.2s' }}
+                    >
                         <div style={{ background: 'rgba(74, 222, 128, 0.15)', padding: '12px', borderRadius: '12px' }}>
                             <TrendingUp color="#4ade80" size={24} />
                         </div>
@@ -347,7 +372,10 @@ export default function Dashboard({ user, onLogout }) {
                     </div>
 
                     {/* SL Hit */}
-                    <div style={{ background: 'rgba(255,255,255,0.03)', padding: '20px', borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    <div 
+                        onClick={() => setFavFilter('LOSS')}
+                        style={{ background: favFilter === 'LOSS' ? 'rgba(248, 113, 113, 0.1)' : 'rgba(255,255,255,0.03)', border: favFilter === 'LOSS' ? '1px solid rgba(248, 113, 113, 0.3)' : '1px solid transparent', padding: '20px', borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '16px', cursor: 'pointer', transition: 'all 0.2s' }}
+                    >
                         <div style={{ background: 'rgba(248, 113, 113, 0.15)', padding: '12px', borderRadius: '12px' }}>
                             <TrendingDown color="#f87171" size={24} />
                         </div>
@@ -382,15 +410,14 @@ export default function Dashboard({ user, onLogout }) {
                 </div>
             </div>
 
-            {favorites.length === 0 ? (
+            {displayedFavorites.length === 0 ? (
                 <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '200px', flexDirection: 'column' }}>
-                   <Star size={48} color="#eab308" />
-                   <h2 style={{ marginTop: '1rem' }}>Favori Listeniz Boş</h2>
-                   <p style={{ color: '#888' }}>Taramalar sekmesinden fırsat ekleyin.</p>
+                   <Star size={48} color="#eab308" style={{ opacity: 0.5 }} />
+                   <h2 style={{ marginTop: '1rem', color: '#888' }}>{favFilter === 'ALL' ? 'Favori Listeniz Boş' : (favFilter === 'WIN' ? 'Henüz TP olan işleminiz yok.' : 'Henüz SL olan işleminiz yok.')}</h2>
                 </div>
             ) : (
                 <div className="signals-grid">
-                   {favorites.map(s => renderSignalCard(s, true))}
+                   {displayedFavorites.map(s => renderSignalCard(s, true))}
                 </div>
             )}
           </div>
