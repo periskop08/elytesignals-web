@@ -26,7 +26,7 @@ export default function Dashboard({ user, onLogout }) {
     const currentPrice = livePrices[symbolKey];
     if (!currentPrice) return 0;
     
-    const rawEntry = (s.entry || '').toString().replace(/,/g, '');
+    const rawEntry = (s.entry || '').toString().replace(/[^0-9.]/g, '');
     const entry = parseFloat(rawEntry) || 0;
     if (entry === 0) return 0;
 
@@ -139,9 +139,13 @@ export default function Dashboard({ user, onLogout }) {
     let isBigProfit = false;
     
     if (currentPrice && s.status === 'ACTIVE') {
-       const entry = parseFloat(s.entryPrice);
-       if (isLong) pnl = ((currentPrice - entry) / entry) * 100;
-       else pnl = ((entry - currentPrice) / entry) * 100;
+       const rawEntry = (s.entry || s.entryPrice || '').toString().replace(/[^0-9.]/g, '');
+       const entry = parseFloat(rawEntry) || 0;
+       
+       if (entry > 0) {
+           if (isLong) pnl = ((currentPrice - entry) / entry) * 100;
+           else pnl = ((entry - currentPrice) / entry) * 100;
+       }
        
        isProfit = pnl > 0;
        isBigProfit = Math.abs(pnl) >= 1.0;
