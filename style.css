@@ -824,8 +824,7 @@ footer {
       bottom: 85px !important; /* Move chat bubble above bottom nav */
   }
 
-  .floating-chat-btn {
-      bottom: 85px !important;
-      right: 16px !important;
+  .chat-fab-wrapper {
+      display: none !important;
   }
 }

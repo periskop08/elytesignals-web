@@ -402,6 +402,12 @@ export default function Dashboard({ user, onLogout }) {
             <h2 style={{ letterSpacing: 1, fontSize: '1.2rem', margin: 0, color: '#fff' }}>ELYTE</h2>
          </div>
          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <button 
+                onClick={() => setIsChatOpen(o => !o)} 
+                style={{ background: isChatOpen ? 'rgba(255,255,255,0.1)' : '#3b82f6', border: 'none', color: isChatOpen ? '#aaa' : '#fff', borderRadius: '12px', width: '38px', height: '38px', display: 'flex', justifyContent: 'center', alignItems: 'center', cursor: 'pointer', boxShadow: isChatOpen ? 'none' : '0 4px 12px rgba(59, 130, 246, 0.4)' }}
+            >
+                {isChatOpen ? <X size={20} /> : <MessageSquare size={18} />}
+            </button>
             <img src={user.photo || 'https://randomuser.me/api/portraits/lego/1.jpg'} style={{ width: 34, height: 34, borderRadius: 17, border: '2px solid rgba(255,255,255,0.1)' }}/>
             <button onClick={onLogout} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '4px', display: 'flex' }}>
                 <LogOut size={22} />
