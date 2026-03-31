@@ -12,14 +12,14 @@ export default function Dashboard({ user, onLogout }) {
   const [chatLog, setChatLog] = useState([{ sender: 'ai', text: 'Periskop AI devrede. Piyasa dalgalarını analiz edebiliriz. Hangi Coin hakkında görüş istersiniz?' }]);
   const [chatInput, setChatInput] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
-  const [stats, setStats] = useState(null);
-  const [statsLoading, setStatsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('markets');
   const [favorites, setFavorites] = useState([]);
   const [selectedSignal, setSelectedSignal] = useState(null);
   const [livePrices, setLivePrices] = useState({});
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [favFilter, setFavFilter] = useState('ALL');
+  const [historyFilter, setHistoryFilter] = useState('WIN');
+  const [historicalSignals, setHistoricalSignals] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
 
   // --- KİŞİSEL İSTATİSTİK HESAPLAMALARI (Favoriler için) ---
   const calculatePnl = (s) => {
@@ -118,6 +118,21 @@ export default function Dashboard({ user, onLogout }) {
             console.error("Stats fetching error", err);
             setStatsLoading(false);
         });
+  };
+
+  const loadHistoryData = (status) => {
+      setHistoryFilter(status);
+      setActiveTab('history');
+      setHistoryLoading(true);
+      axios.get(`/api/signals/history?status=${status}`)
+          .then(res => {
+              setHistoricalSignals(res.data);
+              setHistoryLoading(false);
+          })
+          .catch(err => {
+              console.error("History fetch error:", err);
+              setHistoryLoading(false);
+          });
   };
 
   useEffect(() => {
@@ -311,10 +326,6 @@ export default function Dashboard({ user, onLogout }) {
             <div className={`sidebar-nav-item ${activeTab === 'stats' ? 'active' : ''}`} onClick={() => setActiveTab('stats')}>
                <PieChart size={20} />
                <span>İstatistikler</span>
-            </div>
-            <div className={`sidebar-nav-item ${activeTab === 'history' ? 'active' : ''}`} onClick={() => setActiveTab('history')}>
-               <Clock size={20} />
-               <span>Geçmiş İşlemler</span>
             </div>
         </div>
 
@@ -544,27 +555,35 @@ export default function Dashboard({ user, onLogout }) {
                     </div>
 
                     <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
-                        <div style={{
-                            flex: 1, minWidth: '150px', background: '#162336', padding: '1.5rem', borderRadius: '16px',
-                            border: '1px solid rgba(255,255,255,0.05)', textAlign: 'center', position: 'relative'
-                        }}>
+                        <div 
+                            style={{
+                                flex: 1, minWidth: '150px', background: '#162336', padding: '1.5rem', borderRadius: '16px',
+                                border: '1px solid rgba(255,255,255,0.05)', textAlign: 'center', position: 'relative', cursor: 'pointer'
+                            }}
+                            onClick={() => loadHistoryData('WIN')}
+                        >
                             <TrendingUp color="#4ade80" size={32} style={{ margin: '0 auto' }} />
                             <div style={{ position: 'absolute', right: '1rem', top: '1rem', background: 'rgba(74, 222, 128, 0.15)', padding: '2px 8px', borderRadius: '6px' }}>
                                 <span style={{ color: '#4ade80', fontSize: '0.75rem', fontWeight: 'bold' }}>+%{(stats.totalWinPercentage || 0).toFixed(1)}</span>
                             </div>
                             <h2 style={{ margin: '1rem 0 0.25rem 0', fontSize: '1.75rem', color: '#fff' }}>{stats.wins}</h2>
                             <p style={{ color: '#888', fontSize: '0.85rem', margin: 0 }}>Wins (TP)</p>
+                            <p style={{ color: '#666', fontSize: '0.7rem', marginTop: '4px' }}>Tıkla ve İncele</p>
                         </div>
-                        <div style={{
-                            flex: 1, minWidth: '150px', background: '#162336', padding: '1.5rem', borderRadius: '16px',
-                            border: '1px solid rgba(255,255,255,0.05)', textAlign: 'center', position: 'relative'
-                        }}>
+                        <div 
+                            style={{
+                                flex: 1, minWidth: '150px', background: '#162336', padding: '1.5rem', borderRadius: '16px',
+                                border: '1px solid rgba(255,255,255,0.05)', textAlign: 'center', position: 'relative', cursor: 'pointer'
+                            }}
+                            onClick={() => loadHistoryData('LOSS')}
+                        >
                             <TrendingDown color="#f87171" size={32} style={{ margin: '0 auto' }} />
                             <div style={{ position: 'absolute', right: '1rem', top: '1rem', background: 'rgba(248, 113, 113, 0.15)', padding: '2px 8px', borderRadius: '6px' }}>
                                 <span style={{ color: '#f87171', fontSize: '0.75rem', fontWeight: 'bold' }}>-%{(stats.totalLossPercentage || 0).toFixed(1)}</span>
                             </div>
                             <h2 style={{ margin: '1rem 0 0.25rem 0', fontSize: '1.75rem', color: '#fff' }}>{stats.losses}</h2>
                             <p style={{ color: '#888', fontSize: '0.85rem', margin: 0 }}>Losses (SL)</p>
+                            <p style={{ color: '#666', fontSize: '0.7rem', marginTop: '4px' }}>Tıkla ve İncele</p>
                         </div>
                     </div>
 
@@ -598,10 +617,33 @@ export default function Dashboard({ user, onLogout }) {
         )}
 
         {activeTab === 'history' && (
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', flexDirection: 'column' }}>
-             <Clock size={48} color="#888" />
-             <h2 style={{ marginTop: '1rem' }}>Geçmiş Sinyaller</h2>
-             <p style={{ color: '#888' }}>Geçmişe dair kapalı pozisyonlar burada yer alacak.</p>
+          <div className="history-container" style={{ padding: '1rem', width: '100%' }}>
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '2rem', cursor: 'pointer', gap: '8px', padding: '10px 15px', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', width: 'fit-content' }} onClick={() => setActiveTab('stats')}>
+                  <ArrowLeft size={20} color="#fff" />
+                  <span style={{ color: '#fff', fontWeight: 'bold' }}>İstatistiklere Dön</span>
+              </div>
+              
+              <div style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  {historyFilter === 'WIN' ? <TrendingUp color="#4ade80" size={32} /> : <TrendingDown color="#f87171" size={32} />}
+                  <h2 style={{ fontSize: '1.5rem', margin: 0, color: '#fff' }}>
+                      {historyFilter === 'WIN' ? 'Kazanan İşlemler (TP)' : 'Kaybeden İşlemler (SL)'}
+                  </h2>
+              </div>
+
+              {historyLoading ? (
+                  <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem' }}>
+                      <span style={{ color: '#888' }}>Geçmiş Veriler Yükleniyor...</span>
+                  </div>
+              ) : historicalSignals.length === 0 ? (
+                  <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem', flexDirection: 'column', alignItems: 'center' }}>
+                      <Clock size={48} color="#888" style={{ marginBottom: '1rem' }} />
+                      <span style={{ color: '#888' }}>Bu kategoride işlem bulunmuyor.</span>
+                  </div>
+              ) : (
+                  <div className="signals-grid">
+                      {historicalSignals.map(s => renderSignalCard(s, false))}
+                  </div>
+              )}
           </div>
         )}
         </>
