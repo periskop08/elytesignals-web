@@ -26,7 +26,7 @@ export default function Dashboard({ user, onLogout }) {
   const [prevSignalTrades, setPrevSignalTrades] = useState([]);
   const [prevSignalLoading, setPrevSignalLoading] = useState(false);
   const [isHoveringChat, setIsHoveringChat] = useState(false);
-  const [mousePos, setMousePos] = useState(0);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
   // --- KİŞİSEL İSTATİSTİK HESAPLAMALARI (Favoriler için) ---
   const calculatePnl = (s) => {
@@ -753,12 +753,13 @@ export default function Dashboard({ user, onLogout }) {
          className="chat-fab-wrapper"
          style={{ position: 'fixed', bottom: '24px', right: '24px', width: '60px', height: '60px', zIndex: 1000 }}
          onMouseEnter={() => setIsHoveringChat(true)}
-         onMouseLeave={() => { setIsHoveringChat(false); setMousePos(0); }}
+         onMouseLeave={() => { setIsHoveringChat(false); setMousePos({ x: 0, y: 0 }); }}
          onMouseMove={(e) => {
             const rect = e.currentTarget.getBoundingClientRect();
-            // xOffset ranges approximately from -30 to 30
+            // X and Y offsets relative to the center of the fab wrapper (+/- 30 max)
             const xOffset = e.clientX - rect.left - rect.width / 2;
-            setMousePos(xOffset); 
+            const yOffset = e.clientY - rect.top - rect.height / 2;
+            setMousePos({ x: xOffset, y: yOffset }); 
          }}
       >
           {/* THE PERISCOPE BOT INCORPORATION */}
@@ -798,22 +799,22 @@ export default function Dashboard({ user, onLogout }) {
                   <rect x="32" y="130" width="36" height="6" rx="3" fill="#1e293b" />
                   <rect x="32" y="90" width="36" height="6" rx="3" fill="#1e293b" />
 
-                  {/* Main Head that rotates */}
-                  <g style={{ transform: `rotate(${mousePos / 2.5}deg)`, transformOrigin: '50px 50px', transition: 'transform 0.1s linear' }}>
-                      {/* Outer Head casing */}
-                      <rect x="10" y="20" width="80" height="60" rx="30" fill="url(#metal)" stroke="#1e293b" strokeWidth="3" />
+                  {/* Main Head that rotates and tracks in 3D using pseudo-parallax layers */}
+                  <g style={{ transform: `rotate(${mousePos.x / 2.5}deg) translateY(${mousePos.y / 5}px)`, transformOrigin: '50px 50px', transition: 'transform 0.1s linear' }}>
+                      {/* Layer 1: Outer Head casing (Moves slightly to show rotation) */}
+                      <rect x={10 + mousePos.x/15} y={20 + mousePos.y/15} width="80" height="60" rx="30" fill="url(#metal)" stroke="#1e293b" strokeWidth="3" />
                       
-                      {/* Inner black lens housing */}
-                      <circle cx="50" cy="50" r="22" fill="#0f172a" stroke="#475569" strokeWidth="3" />
+                      {/* Layer 2: Inner black lens housing */}
+                      <circle cx={50 + mousePos.x/8} cy={50 + mousePos.y/8} r="22" fill="#0f172a" stroke="#475569" strokeWidth="3" />
                       
-                      {/* Blue Glowing Lens */}
-                      <circle cx="50" cy="50" r="16" fill="url(#lens)" />
+                      {/* Layer 3: Blue Glowing Lens */}
+                      <circle cx={50 + mousePos.x/5} cy={50 + mousePos.y/5} r="16" fill="url(#lens)" />
                       
-                      {/* Inner cyan glowing pupil moving slightly with mousePos */}
-                      <circle cx={50 + (mousePos/5)} cy="50" r="6" fill="#22d3ee" style={{ filter: 'drop-shadow(0 0 4px #22d3ee)' }} />
+                      {/* Layer 4: Inner cyan glowing pupil moving furthest representing the camera retina */}
+                      <circle cx={50 + mousePos.x/3} cy={50 + mousePos.y/3} r="5" fill="#22d3ee" style={{ filter: 'drop-shadow(0 0 5px #22d3ee)' }} />
                       
-                      {/* Lens reflection (highlight) */}
-                      <path d="M 40 40 Q 50 32 60 40 A 14 14 0 0 0 40 40" fill="rgba(255,255,255,0.4)" />
+                      {/* Layer 5: Lens reflection (highlight) staying relatively fixed to light source */}
+                      <path d={`M ${40 + mousePos.x/10} ${40 + mousePos.y/10} Q ${50 + mousePos.x/10} ${32 + mousePos.y/10} ${60 + mousePos.x/10} ${40 + mousePos.y/10} A 14 14 0 0 0 ${40 + mousePos.x/10} ${40 + mousePos.y/10}`} fill="rgba(255,255,255,0.4)" />
                   </g>
               </svg>
           </div>
