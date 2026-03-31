@@ -64,11 +64,22 @@ export default function Dashboard({ user, onLogout }) {
   const mainShorts = activeMainSignals.filter(s => s.type === 'SHORT').length;
   let mainProfitCount = 0;
   let mainLossCount = 0;
+  let totalMarketPnl = 0;
   activeMainSignals.forEach(s => {
       const p = calculatePnl(s);
+      totalMarketPnl += p;
       if (p > 0) mainProfitCount++;
       else if (p < 0) mainLossCount++; 
   });
+
+  const marketPnlColor = totalMarketPnl >= 0 ? '#4ade80' : '#f87171';
+  let marketPnlSign = totalMarketPnl >= 0 ? '+' : '';
+  let marketPnlBlinkClass = '';
+  if (Math.abs(totalMarketPnl) >= 5) {
+      marketPnlBlinkClass = totalMarketPnl >= 0 ? 'blink-speed-3' : 'blink-speed-3-loss';
+  } else if (Math.abs(totalMarketPnl) >= 3) {
+      marketPnlBlinkClass = totalMarketPnl >= 0 ? 'blink-speed-1' : 'blink-speed-1-loss';
+  }
 
   useEffect(() => {
     fetchSignals();
@@ -315,7 +326,15 @@ export default function Dashboard({ user, onLogout }) {
                     <h1 style={{ fontSize: '2rem', marginBottom: '0.5rem', fontWeight: '800' }}>Canlı Akış</h1>
                     <p style={{ color: '#888', fontSize: '1rem' }}>Periskop yapay zeka analiz motorunun anlık tespitleri.</p>
                 </div>
-                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                   {activeMainSignals.length > 0 && (
+                       <div className={marketPnlBlinkClass} style={{ background: 'rgba(255,255,255,0.03)', padding: '6px 14px', borderRadius: '10px', marginRight: '4px', border: marketPnlBlinkClass ? undefined : `1px solid rgba(255,255,255,0.05)`, transition: 'all 0.3s' }}>
+                           <span style={{ color: '#888', fontSize: '0.9rem', marginRight: '6px' }}>Toplam Net:</span>
+                           <span style={{ color: marketPnlColor, fontWeight: 'bold', fontSize: '1.2rem', textShadow: marketPnlBlinkClass ? 'none' : `0 0 10px ${marketPnlColor}40` }}>
+                               {marketPnlSign}{totalMarketPnl.toFixed(2)}%
+                           </span>
+                       </div>
+                   )}
                    <div style={{ background: 'rgba(255,255,255,0.05)', padding: '8px 14px', borderRadius: '10px', fontSize: '0.85rem' }}>
                        <span style={{ color: '#888' }}>Aktif:</span> <span style={{ fontWeight: 'bold', fontSize: '1rem', marginLeft: '4px' }}>{activeMainSignals.length}</span>
                    </div>
