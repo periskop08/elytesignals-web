@@ -38,7 +38,7 @@ export default function Dashboard({ user, onLogout }) {
         // 5 saniye sonra gizle
         setTimeout(() => setIsAutoPoking(false), 5000);
       }
-    }, 30 * 60 * 1000); // 30 dakika
+    }, 10 * 1000); // Test için 10 saniye (Daha sonra 30 * 60 * 1000 yapılacak)
 
     return () => clearInterval(pokeTimer);
   }, [isChatOpen, isHoveringChat]);
