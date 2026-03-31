@@ -38,7 +38,7 @@ export default function Dashboard({ user, onLogout }) {
         // 5 saniye sonra gizle
         setTimeout(() => setIsAutoPoking(false), 5000);
       }
-    }, 10 * 1000); // Test için 10 saniye (Daha sonra 30 * 60 * 1000 yapılacak)
+    }, 30 * 60 * 1000); // 30 dakika
 
     return () => clearInterval(pokeTimer);
   }, [isChatOpen, isHoveringChat]);
@@ -76,11 +76,8 @@ export default function Dashboard({ user, onLogout }) {
       totalPnlBlinkClass = totalFavPnl >= 0 ? 'blink-speed-1' : 'blink-speed-1-loss';
   }
 
-  // Sinyal Filitreleme
-  const displayedFavorites = favorites.filter(s => {
-      if (favFilter === 'ALL') return true;
-      return s.status === favFilter;
-  });
+  // Sinyal Filtreleme: Kullanıcı isteği üzerine kapalı(TP/SL) olanlar filtreden tamamen çıkartıldı
+  const displayedFavorites = favorites.filter(s => s.status === 'ACTIVE');
 
   // Taramalar İstatistikleri
   const activeMainSignals = signals.filter(s => s.status === 'ACTIVE');
@@ -552,10 +549,10 @@ export default function Dashboard({ user, onLogout }) {
                   <img src={user.photo || 'https://randomuser.me/api/portraits/lego/1.jpg'} style={{ width: 50, height: 50, borderRadius: 25, border: '2px solid rgba(255,255,255,0.1)' }}/>
                   <div>
                     <h1 style={{ fontSize: '1.6rem', fontWeight: '800', lineHeight: 1 }}>{user.name}</h1>
-                    <p style={{ color: '#888', fontSize: '0.9rem', marginTop: '4px' }}>İzleme listenizde {favorites.length} işlem var.</p>
+                    <p style={{ color: '#888', fontSize: '0.9rem', marginTop: '4px' }}>İzleme listenizde aktif {displayedFavorites.length} işlem var.</p>
                   </div>
                </div>
-               {favorites.some(s => s.status === 'ACTIVE') && (
+               {displayedFavorites.length > 0 && (
                    <div style={{ textAlign: 'right' }}>
                        <span className={totalPnlBlinkClass} style={{ fontSize: '1.4rem', fontWeight: 'bold', color: totalPnlColor, textShadow: totalPnlBlinkClass ? 'none' : `0 0 10px ${totalPnlColor}40`, padding: '4px 12px', borderRadius: '8px', border: totalPnlBlinkClass ? undefined : '1px solid transparent', transition: 'all 0.3s' }}>
                            {totalPnlSign}{totalFavPnl.toFixed(2)}%
@@ -564,76 +561,11 @@ export default function Dashboard({ user, onLogout }) {
                )}
             </div>
 
-            {/* PERSONAL PERFORMANCE GRID */}
-            <div style={{ background: 'rgba(22, 35, 54, 0.4)', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)', padding: '24px', marginBottom: '30px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                    <h3 style={{ fontSize: '1.2rem', fontWeight: '600' }}>Kişisel Performans</h3>
-                    {favFilter !== 'ALL' && (
-                        <button onClick={() => setFavFilter('ALL')} style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#3b82f6', border: 'none', padding: '6px 12px', borderRadius: '8px', fontSize: '0.8rem', cursor: 'pointer', fontWeight: 'bold' }}>
-                            Tümünü Göster
-                        </button>
-                    )}
-                </div>
-                
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                    
-                    {/* TP Hit */}
-                    <div 
-                        onClick={() => setFavFilter('WIN')}
-                        style={{ background: favFilter === 'WIN' ? 'rgba(74, 222, 128, 0.1)' : 'rgba(255,255,255,0.03)', border: favFilter === 'WIN' ? '1px solid rgba(74, 222, 128, 0.3)' : '1px solid transparent', padding: '20px', borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '16px', cursor: 'pointer', transition: 'all 0.2s' }}
-                    >
-                        <div style={{ background: 'rgba(74, 222, 128, 0.15)', padding: '12px', borderRadius: '12px' }}>
-                            <TrendingUp color="#4ade80" size={24} />
-                        </div>
-                        <div>
-                            <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{totalWins}</div>
-                            <div style={{ fontSize: '0.85rem', color: '#888' }}>TP Hit</div>
-                        </div>
-                    </div>
-
-                    {/* SL Hit */}
-                    <div 
-                        onClick={() => setFavFilter('LOSS')}
-                        style={{ background: favFilter === 'LOSS' ? 'rgba(248, 113, 113, 0.1)' : 'rgba(255,255,255,0.03)', border: favFilter === 'LOSS' ? '1px solid rgba(248, 113, 113, 0.3)' : '1px solid transparent', padding: '20px', borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '16px', cursor: 'pointer', transition: 'all 0.2s' }}
-                    >
-                        <div style={{ background: 'rgba(248, 113, 113, 0.15)', padding: '12px', borderRadius: '12px' }}>
-                            <TrendingDown color="#f87171" size={24} />
-                        </div>
-                        <div>
-                            <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{totalLosses}</div>
-                            <div style={{ fontSize: '0.85rem', color: '#888' }}>SL Hit</div>
-                        </div>
-                    </div>
-
-                    {/* Win Rate */}
-                    <div style={{ background: 'rgba(255,255,255,0.03)', padding: '20px', borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-                        <div style={{ background: 'rgba(234, 179, 8, 0.15)', padding: '12px', borderRadius: '12px' }}>
-                            <Target color="#eab308" size={24} />
-                        </div>
-                        <div>
-                            <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>%{winRate}</div>
-                            <div style={{ fontSize: '0.85rem', color: '#888' }}>Kazanma Oranı</div>
-                        </div>
-                    </div>
-
-                    {/* +%2 Actives */}
-                    <div style={{ background: 'rgba(255,255,255,0.03)', padding: '20px', borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-                        <div style={{ background: 'rgba(56, 189, 248, 0.15)', padding: '12px', borderRadius: '12px' }}>
-                            <Rocket color="#38bdf8" size={24} />
-                        </div>
-                        <div>
-                            <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{reachedTwoPercentCount}</div>
-                            <div style={{ fontSize: '0.85rem', color: '#888' }}>+%2 Kârdakiler</div>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-
             {displayedFavorites.length === 0 ? (
                 <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '200px', flexDirection: 'column' }}>
                    <Star size={48} color="#eab308" style={{ opacity: 0.5 }} />
-                   <h2 style={{ marginTop: '1rem', color: '#888' }}>{favFilter === 'ALL' ? 'Favori Listeniz Boş' : (favFilter === 'WIN' ? 'Henüz TP olan işleminiz yok.' : 'Henüz SL olan işleminiz yok.')}</h2>
+                   <h2 style={{ marginTop: '1rem', color: '#888' }}>Aktif Favoriniz Yok</h2>
+                   <p style={{ color: '#555', marginTop: '0.5rem' }}>İşlemleriniz (TP/SL) sonuçlandığında listeden otomatik düşer.</p>
                 </div>
             ) : (
                 <div className="signals-grid">
