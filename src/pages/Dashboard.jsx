@@ -360,7 +360,7 @@ export default function Dashboard({ user, onLogout }) {
     const isNew = newSignalIds.includes(s.id);
 
     return (
-        <div className={`signal-card ${s.type} ${isNew ? 'new-signal-blink' : ''}`} key={isFavTab ? `fav-${s.id}` : s.id} style={{ padding: '16px', borderRadius: '20px', backgroundColor: '#162336', borderWidth: '1px', borderColor: 'rgba(255,255,255,0.08)', marginBottom: '4px', cursor: 'pointer', position: 'relative' }} onClick={() => setSelectedSignal(s)}>
+        <div className={`signal-card ${s.type} ${isNew ? 'new-signal-blink' : ''}`} key={isFavTab ? `fav-${s.id}` : s.id} style={{ padding: '16px', borderRadius: '20px', backgroundColor: '#162336', border: '1px solid rgba(255,255,255,0.08)', borderLeft: `5px solid ${isLong ? '#4ade80' : '#ef4444'}`, marginBottom: '12px', cursor: 'pointer', position: 'relative' }} onClick={() => setSelectedSignal(s)}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                 <div style={{ display: 'flex', alignItems: 'center' }}>
                     <div style={{ width: '42px', height: '42px', borderRadius: '12px', backgroundColor: isLong ? 'rgba(74, 222, 128, 0.15)' : 'rgba(248, 113, 113, 0.15)', display: 'flex', justifyContent: 'center', alignItems: 'center', marginRight: '14px' }}>
@@ -571,34 +571,36 @@ export default function Dashboard({ user, onLogout }) {
           <>
             {activeTab === 'markets' && (
           <>
-             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '1rem', flexWrap: 'wrap', gap: '15px' }}>
-                <div>
-                    <h1 style={{ fontSize: '2rem', marginBottom: '0.5rem', fontWeight: '800' }}>Canlı Akış</h1>
-                    <p style={{ color: '#888', fontSize: '1rem' }}>Periskop yapay zeka analiz motorunun anlık tespitleri.</p>
+             <div style={{ marginBottom: '1rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '8px' }}>
+                    <h1 style={{ fontSize: '2rem', margin: 0, fontWeight: '800' }}>Canlı Akış</h1>
+                    {activeMainSignals.length > 0 && (
+                        <div className={marketPnlBlinkClass} style={{ background: 'rgba(255,255,255,0.03)', padding: '6px 14px', borderRadius: '10px', border: marketPnlBlinkClass ? undefined : `1px solid ${marketPnlColor}66`, transition: 'all 0.3s' }}>
+                            <span style={{ color: '#888', fontSize: '0.9rem', marginRight: '6px' }}>Net:</span>
+                            <span style={{ color: marketPnlColor, fontWeight: 'bold', fontSize: '1.2rem', textShadow: marketPnlBlinkClass ? 'none' : `0 0 10px ${marketPnlColor}40` }}>
+                                {marketPnlSign}{totalMarketPnl.toFixed(2)}%
+                            </span>
+                        </div>
+                    )}
                 </div>
-                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-                   {activeMainSignals.length > 0 && (
-                       <div className={marketPnlBlinkClass} style={{ background: 'rgba(255,255,255,0.03)', padding: '6px 14px', borderRadius: '10px', marginRight: '4px', border: marketPnlBlinkClass ? undefined : `1px solid rgba(255,255,255,0.05)`, transition: 'all 0.3s' }}>
-                           <span style={{ color: '#888', fontSize: '0.9rem', marginRight: '6px' }}>Toplam Net:</span>
-                           <span style={{ color: marketPnlColor, fontWeight: 'bold', fontSize: '1.2rem', textShadow: marketPnlBlinkClass ? 'none' : `0 0 10px ${marketPnlColor}40` }}>
-                               {marketPnlSign}{totalMarketPnl.toFixed(2)}%
-                           </span>
-                       </div>
-                   )}
-                   <div style={{ background: 'rgba(255,255,255,0.05)', padding: '8px 14px', borderRadius: '10px', fontSize: '0.85rem' }}>
-                       <span style={{ color: '#888' }}>Aktif:</span> <span style={{ fontWeight: 'bold', fontSize: '1rem', marginLeft: '4px' }}>{activeMainSignals.length}</span>
+                <p style={{ color: '#888', fontSize: '1rem', marginBottom: '16px' }}>Periskop yapay zeka analiz motorunun anlık tespitleri.</p>
+
+                <div className="stats-scroll-container" style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '8px', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                   <style>{`.stats-scroll-container::-webkit-scrollbar { display: none; }`}</style>
+                   <div style={{ background: 'rgba(255,255,255,0.05)', padding: '8px 12px', borderRadius: '10px', fontSize: '0.85rem', whiteSpace: 'nowrap', border: '1px solid rgba(255,255,255,0.05)' }}>
+                       <span style={{ color: '#888' }}>Aktif:</span> <span style={{ color: '#fff', fontWeight: 'bold', fontSize: '0.9rem', marginLeft: '4px' }}>{activeMainSignals.length}</span>
                    </div>
-                   <div style={{ background: 'rgba(74, 222, 128, 0.1)', padding: '8px 14px', borderRadius: '10px', fontSize: '0.85rem' }}>
-                       <span style={{ color: '#4ade80', fontWeight: 'bold' }}>{mainLongs} L</span>
+                   <div style={{ background: 'rgba(74, 222, 128, 0.15)', padding: '8px 12px', borderRadius: '10px', fontSize: '0.85rem', whiteSpace: 'nowrap', border: '1px solid transparent' }}>
+                       <span style={{ color: '#4ade80', fontWeight: 'bold', fontSize: '0.9rem' }}>{mainLongs} Long</span>
                    </div>
-                   <div style={{ background: 'rgba(248, 113, 113, 0.1)', padding: '8px 14px', borderRadius: '10px', fontSize: '0.85rem' }}>
-                       <span style={{ color: '#f87171', fontWeight: 'bold' }}>{mainShorts} S</span>
+                   <div style={{ background: 'rgba(248, 113, 113, 0.15)', padding: '8px 12px', borderRadius: '10px', fontSize: '0.85rem', whiteSpace: 'nowrap', border: '1px solid transparent' }}>
+                       <span style={{ color: '#f87171', fontWeight: 'bold', fontSize: '0.9rem' }}>{mainShorts} Short</span>
                    </div>
-                   <div style={{ background: 'rgba(74, 222, 128, 0.15)', padding: '8px 14px', borderRadius: '10px', fontSize: '0.85rem', border: '1px solid rgba(74, 222, 128, 0.3)' }}>
-                       <span style={{ color: '#4ade80', fontWeight: 'bold' }}>{mainProfitCount} Kâr</span>
+                   <div style={{ background: 'rgba(74, 222, 128, 0.05)', padding: '8px 12px', borderRadius: '10px', fontSize: '0.85rem', whiteSpace: 'nowrap', border: '1px solid rgba(74, 222, 128, 0.3)' }}>
+                       <span style={{ color: '#4ade80', fontWeight: 'bold', fontSize: '0.9rem' }}>{mainProfitCount} Kâr</span>
                    </div>
-                   <div style={{ background: 'rgba(248, 113, 113, 0.15)', padding: '8px 14px', borderRadius: '10px', fontSize: '0.85rem', border: '1px solid rgba(248, 113, 113, 0.3)' }}>
-                       <span style={{ color: '#f87171', fontWeight: 'bold' }}>{mainLossCount} Zarar</span>
+                   <div style={{ background: 'rgba(248, 113, 113, 0.05)', padding: '8px 12px', borderRadius: '10px', fontSize: '0.85rem', whiteSpace: 'nowrap', border: '1px solid rgba(248, 113, 113, 0.3)' }}>
+                       <span style={{ color: '#f87171', fontWeight: 'bold', fontSize: '0.9rem' }}>{mainLossCount} Zarar</span>
                    </div>
                 </div>
              </div>
