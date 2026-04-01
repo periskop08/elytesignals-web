@@ -6,24 +6,12 @@ export default function Login({ onLogin }) {
   const pollInterval = useRef(null);
 
   const handleTelegramAuth = async () => {
-    let newTab = null;
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    
-    // Masaüstünde MacOS Safari'nin "asenkron popup engelleyicisini" aşmak için bekleme (await) öncesi sekmeyi açıyoruz.
-    if (!isMobile) {
-        newTab = window.open('', '_blank');
-        if (newTab) {
-            newTab.document.write('Telegram botuna yönlendiriliyorsunuz, lütfen bekleyin...');
-        }
-    }
-
     try {
       setConnecting(true);
       setErrorDesc('');
       
       const res = await fetch('/api/auth/session');
       if (!res.ok) {
-          if (newTab) newTab.close();
           throw new Error("API sunucusu çevrimdışı");
       }
       const data = await res.json();
@@ -31,15 +19,9 @@ export default function Login({ onLogin }) {
 
       const botUsername = 'ElytDev_Bot';
       
-      if (isMobile) {
-          window.location.href = `tg://resolve?domain=${botUsername}&start=${sessionId}`;
-      } else {
-          if (newTab) {
-              newTab.location.href = `https://t.me/${botUsername}?start=${sessionId}`;
-          } else {
-              window.open(`https://t.me/${botUsername}?start=${sessionId}`, '_blank');
-          }
-      }
+      // Tüm cihazlarda (PC ve Mobil) doğrudan yüklü olan Native Telegram uygulamasını tetikliyoruz.
+      // Tarayıcı sekmesini değiştirmeden OS bazlı URI scheme çağrısı (tg://) yapar.
+      window.location.href = `tg://resolve?domain=${botUsername}&start=${sessionId}`;
 
       // Poll every 3 seconds
       pollInterval.current = setInterval(async () => {
