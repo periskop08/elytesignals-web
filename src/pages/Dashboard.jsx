@@ -540,6 +540,9 @@ export default function Dashboard({ user, onLogout }) {
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                             <span style={{ color: '#888', fontWeight: 'bold' }}>Geçmiş #{i + 1}</span>
                                             <span style={{ color: pt.type === 'LONG'? '#4ade80' : '#f87171', fontWeight: 'bold', padding: '2px 8px', background: pt.type === 'LONG' ? 'rgba(74,222,128,0.1)' : 'rgba(248,113,113,0.1)', borderRadius: '6px' }}>{pt.type}</span>
+                                            <span style={{ color: '#666', fontSize: '0.8rem', marginLeft: '6px' }}>
+                                                {pt.createdAt ? new Date(pt.createdAt + 'Z').toLocaleString('tr-TR', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' }) : ''}
+                                            </span>
                                         </div>
                                         <div style={{ color: pt.status === 'WIN' ? '#4ade80' : '#f87171', fontWeight: 'bold', fontSize: '0.9rem', background: pt.status === 'WIN' ? 'rgba(74,222,128,0.15)' : 'rgba(248,113,113,0.15)', padding: '4px 10px', borderRadius: '8px' }}>
                                             {pt.status === 'WIN' ? 'KAZANÇ (TP)' : 'KAYIP (SL)'} ({parseFloat(pt.calculatedPnl) > 0 ? '+' : ''}{pt.calculatedPnl}%)
