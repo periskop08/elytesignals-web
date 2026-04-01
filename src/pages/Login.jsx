@@ -6,24 +6,39 @@ export default function Login({ onLogin }) {
   const pollInterval = useRef(null);
 
   const handleTelegramAuth = async () => {
+    let newTab = null;
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    
+    // Masaüstünde MacOS Safari'nin "asenkron popup engelleyicisini" aşmak için bekleme (await) öncesi sekmeyi açıyoruz.
+    if (!isMobile) {
+        newTab = window.open('', '_blank');
+        if (newTab) {
+            newTab.document.write('Telegram botuna yönlendiriliyorsunuz, lütfen bekleyin...');
+        }
+    }
+
     try {
       setConnecting(true);
       setErrorDesc('');
       
       const res = await fetch('/api/auth/session');
-      if (!res.ok) throw new Error("API sunucusu çevrimdışı");
+      if (!res.ok) {
+          if (newTab) newTab.close();
+          throw new Error("API sunucusu çevrimdışı");
+      }
       const data = await res.json();
       const sessionId = data.sessionId;
 
       const botUsername = 'ElytDev_Bot';
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
       
       if (isMobile) {
-          // Mobil cihazlarda arka planda boş sayfa kalmaması için direkt Native App intent'ini tetikliyoruz
           window.location.href = `tg://resolve?domain=${botUsername}&start=${sessionId}`;
       } else {
-          // Masaüstü cihazlarda normal web versiyonunu yeni sekmede (popup engelleyici şansımızı deneyerek) açıyoruz.
-          window.open(`https://t.me/${botUsername}?start=${sessionId}`, '_blank');
+          if (newTab) {
+              newTab.location.href = `https://t.me/${botUsername}?start=${sessionId}`;
+          } else {
+              window.open(`https://t.me/${botUsername}?start=${sessionId}`, '_blank');
+          }
       }
 
       // Poll every 3 seconds
