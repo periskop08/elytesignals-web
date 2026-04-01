@@ -164,7 +164,7 @@ export default function Dashboard({ user, onLogout }) {
   let totalMarketPnl = 0;
   activeMainSignals.forEach(s => {
       const p = calculatePnl(s);
-      totalMarketPnl += p;
+      totalMarketPnl += (p * 3 / 100);
       if (p > 0) mainProfitCount++;
       else if (p < 0) mainLossCount++; 
   });
@@ -172,9 +172,9 @@ export default function Dashboard({ user, onLogout }) {
   const marketPnlColor = totalMarketPnl >= 0 ? '#4ade80' : '#f87171';
   let marketPnlSign = totalMarketPnl >= 0 ? '+' : '';
   let marketPnlBlinkClass = '';
-  if (Math.abs(totalMarketPnl) >= 50) { // ROE % bazında
+  if (Math.abs(totalMarketPnl) >= 3) { 
       marketPnlBlinkClass = totalMarketPnl >= 0 ? 'blink-speed-3' : 'blink-speed-3-loss';
-  } else if (Math.abs(totalMarketPnl) >= 20) {
+  } else if (Math.abs(totalMarketPnl) >= 1) { 
       marketPnlBlinkClass = totalMarketPnl >= 0 ? 'blink-speed-1' : 'blink-speed-1-loss';
   }
 
@@ -657,7 +657,7 @@ export default function Dashboard({ user, onLogout }) {
                         <div className={marketPnlBlinkClass} style={{ background: 'rgba(255,255,255,0.03)', padding: '6px 14px', borderRadius: '10px', border: marketPnlBlinkClass ? undefined : `1px solid ${marketPnlColor}66`, transition: 'all 0.3s' }}>
                             <span style={{ color: '#888', fontSize: '0.9rem', marginRight: '6px' }}>Net:</span>
                             <span style={{ color: marketPnlColor, fontWeight: 'bold', fontSize: '1.2rem', textShadow: marketPnlBlinkClass ? 'none' : `0 0 10px ${marketPnlColor}40` }}>
-                                {marketPnlSign}{totalMarketPnl.toFixed(2)}%
+                                {marketPnlSign}${Math.abs(totalMarketPnl).toFixed(2)}
                             </span>
                         </div>
                     )}
@@ -717,7 +717,7 @@ export default function Dashboard({ user, onLogout }) {
                {favorites.some(s => s.status === 'ACTIVE') && (
                    <div style={{ textAlign: 'right' }}>
                        <span className={totalPnlBlinkClass} style={{ fontSize: '1.4rem', fontWeight: 'bold', color: totalPnlColor, textShadow: totalPnlBlinkClass ? 'none' : `0 0 10px ${totalPnlColor}40`, padding: '4px 12px', borderRadius: '8px', border: totalPnlBlinkClass ? undefined : '1px solid transparent', transition: 'all 0.3s' }}>
-                           {totalPnlSign}{totalFavPnl.toFixed(2)}%
+                           {totalPnlSign}${Math.abs(totalFavPnl).toFixed(2)}
                        </span>
                    </div>
                )}
