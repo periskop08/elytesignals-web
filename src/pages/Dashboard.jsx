@@ -16,6 +16,8 @@ export default function Dashboard({ user, onLogout }) {
   const [statsLoading, setStatsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('markets');
   const [favorites, setFavorites] = useState([]);
+  const [userTrades, setUserTrades] = useState([]);
+  const [closingTradeId, setClosingTradeId] = useState(null);
   const [selectedSignal, setSelectedSignal] = useState(null);
   const [livePrices, setLivePrices] = useState({});
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -85,7 +87,6 @@ export default function Dashboard({ user, onLogout }) {
     return () => clearInterval(pokeTimer);
   }, [isChatOpen, isHoveringChat]);
 
-  // --- KİŞİSEL İSTATİSTİK HESAPLAMALARI (Favoriler için) ---
   const calculatePnl = (s) => {
     if (!s || s.status !== 'ACTIVE') return 0;
     const symbolKey = s.coin ? s.coin.replace('/', '') : s.symbol.replace('/', '');
@@ -96,18 +97,36 @@ export default function Dashboard({ user, onLogout }) {
     const entry = parseFloat(rawEntry) || 0;
     if (entry === 0) return 0;
 
-    return (s.type === 'LONG') 
+    const spotPnl = (s.type === 'LONG') 
         ? ((currentPrice - entry) / entry) * 100
         : ((entry - currentPrice) / entry) * 100;
+    
+    return spotPnl * 10; // 10x Kaldıraç (ROE)
   };
 
-  const totalWins = favorites.filter(sig => sig.status === 'WIN').length;
-  const totalLosses = favorites.filter(sig => sig.status === 'LOSS').length;
+  const closedUserTrades = userTrades.filter(t => t.status === 'CLOSED');
+  const activeUserTrades = userTrades.filter(t => t.status === 'ACTIVE');
+  
+  const totalWins = closedUserTrades.filter(t => t.pnl > 0).length;
+  const totalLosses = closedUserTrades.filter(t => t.pnl <= 0).length;
   const closedSignals = totalWins + totalLosses;
   const winRate = closedSignals > 0 ? ((totalWins / closedSignals) * 100).toFixed(1) : 0;
   
-  const reachedTwoPercentCount = favorites.filter(sig => calculatePnl(sig) >= 2.0).length;
-  const totalFavPnl = favorites.reduce((acc, curr) => acc + calculatePnl(curr), 0);
+  const reachedTwoPercentCount = activeUserTrades.filter(t => {
+      const sp = livePrices[t.symbol.replace('/', '')];
+      if(!sp) return false;
+      const p = t.type === 'LONG' ? ((sp - t.entryPrice)/t.entryPrice)*100 : ((t.entryPrice - sp)/t.entryPrice)*100;
+      return p >= 2.0;
+  }).length;
+  
+  const totalFavPnl = activeUserTrades.reduce((acc, curr) => {
+      const sp = livePrices[curr.symbol.replace('/', '')];
+      if(!sp) return acc;
+      const roePnl = (curr.type === 'LONG' ? ((sp - curr.entryPrice)/curr.entryPrice)*100 : ((curr.entryPrice - sp)/curr.entryPrice)*100) * 10;
+      const usdProfit = 3 * (roePnl / 100); // 3$ Sabit Margin üzerinden NET Kâr/Zarar
+      return acc + usdProfit;
+  }, 0);
+
   const totalPnlColor = totalFavPnl >= 0 ? '#4ade80' : '#f87171';
   let totalPnlSign = totalFavPnl >= 0 ? '+' : '';
   
@@ -141,9 +160,9 @@ export default function Dashboard({ user, onLogout }) {
   const marketPnlColor = totalMarketPnl >= 0 ? '#4ade80' : '#f87171';
   let marketPnlSign = totalMarketPnl >= 0 ? '+' : '';
   let marketPnlBlinkClass = '';
-  if (Math.abs(totalMarketPnl) >= 5) {
+  if (Math.abs(totalMarketPnl) >= 50) { // ROE % bazında
       marketPnlBlinkClass = totalMarketPnl >= 0 ? 'blink-speed-3' : 'blink-speed-3-loss';
-  } else if (Math.abs(totalMarketPnl) >= 3) {
+  } else if (Math.abs(totalMarketPnl) >= 20) {
       marketPnlBlinkClass = totalMarketPnl >= 0 ? 'blink-speed-1' : 'blink-speed-1-loss';
   }
 
@@ -152,17 +171,15 @@ export default function Dashboard({ user, onLogout }) {
     fetchPrices();
     
     if (user && user.telegramId) {
-       axios.get(`/api/favorites/${user.telegramId}?ts=${Date.now()}`)
-          .then(res => setFavorites(res.data))
-          .catch(err => console.error("Ağ hatası: Favoriler alınamadı", err));
+       axios.get(`/api/favorites/${user.telegramId}?ts=${Date.now()}`).then(res => setFavorites(res.data)).catch(console.error);
+       axios.get(`/api/user-trades/${user.telegramId}?ts=${Date.now()}`).then(res => setUserTrades(res.data)).catch(console.error);
     }
 
     const interval = setInterval(() => {
         fetchSignals();
         if (user && user.telegramId) {
-            axios.get(`/api/favorites/${user.telegramId}?ts=${Date.now()}`)
-               .then(res => setFavorites(res.data))
-               .catch(e => console.error(e));
+            axios.get(`/api/favorites/${user.telegramId}?ts=${Date.now()}`).then(res => setFavorites(res.data)).catch(console.error);
+            axios.get(`/api/user-trades/${user.telegramId}?ts=${Date.now()}`).then(res => setUserTrades(res.data)).catch(console.error);
         }
     }, 60000);
     const priceInterval = setInterval(fetchPrices, 5000);
@@ -326,9 +343,24 @@ export default function Dashboard({ user, onLogout }) {
       return rand;
   };
 
+  const closeUserTrade = async (e, tradeId) => {
+      e.stopPropagation();
+      setClosingTradeId(tradeId);
+      try {
+          await axios.post('/api/user-trades/close', { telegramId: user.telegramId, tradeId });
+          const res = await axios.get(`/api/user-trades/${user.telegramId}?ts=${Date.now()}`);
+          setUserTrades(res.data);
+      } catch(err) {
+          alert("Hata: " + (err.response?.data?.error || err.message));
+      } finally {
+          setClosingTradeId(null);
+      }
+  };
+
   const renderSignalCard = (s, isFavTab) => {
     const isLong = s.type === 'LONG';
     const isFav = favorites.some(f => f.id === s.id);
+    const userTrade = userTrades.find(t => t.signalId === s.id);
     const fmtPrice = val => parseFloat(val).toLocaleString('en-US', {maximumFractionDigits:5});
     
     const symbolKey = s.coin ? s.coin.replace('/', '') : s.symbol.replace('/', '');
@@ -344,15 +376,17 @@ export default function Dashboard({ user, onLogout }) {
        const entry = parseFloat(rawEntry) || 0;
        
        if (entry > 0) {
-           if (isLong) pnl = ((currentPrice - entry) / entry) * 100;
-           else pnl = ((entry - currentPrice) / entry) * 100;
+           const spotPnl = isLong 
+              ? ((currentPrice - entry) / entry) * 100 
+              : ((entry - currentPrice) / entry) * 100;
+           pnl = spotPnl * 10; // 10x ROE
        }
        
        isProfit = pnl > 0;
-       isBigProfit = Math.abs(pnl) >= 1.0;
+       isBigProfit = Math.abs(pnl) >= 10.0; // %10 ROE
        if (isBigProfit) {
-           if (Math.abs(pnl) >= 3.0) blinkClass = isProfit ? 'blink-speed-3' : 'blink-speed-3-loss';
-           else if (Math.abs(pnl) >= 2.0) blinkClass = isProfit ? 'blink-speed-2' : 'blink-speed-2-loss';
+           if (Math.abs(pnl) >= 30.0) blinkClass = isProfit ? 'blink-speed-3' : 'blink-speed-3-loss';
+           else if (Math.abs(pnl) >= 20.0) blinkClass = isProfit ? 'blink-speed-2' : 'blink-speed-2-loss';
            else blinkClass = isProfit ? 'blink-speed-1' : 'blink-speed-1-loss';
        }
     }
@@ -417,6 +451,36 @@ export default function Dashboard({ user, onLogout }) {
                     <span style={{ color: '#fff', fontSize: '1rem', fontWeight: '600' }}>${fmtPrice(s.stopPrice)}</span>
                 </div>
             </div>
+            
+            {/* OTOPILOT BİLGİLENDİRME ve KAPAT BUTONU */}
+            {userTrade && (
+                <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    {userTrade.status === 'ACTIVE' ? (
+                        <>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <Bot size={16} color="#38bdf8" />
+                                <span style={{ color: '#38bdf8', fontSize: '0.85rem', fontWeight: 'bold' }}>Emir Gönderildi (Açık)</span>
+                            </div>
+                            {isFavTab && (
+                                <button 
+                                    onClick={(e) => closeUserTrade(e, userTrade.id)}
+                                    disabled={closingTradeId === userTrade.id}
+                                    style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.3)', padding: '6px 12px', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 'bold', cursor: 'pointer', transition: 'all 0.2s' }}
+                                >
+                                    {closingTradeId === userTrade.id ? 'Kapatılıyor...' : 'İşlemi Kapat'}
+                                </button>
+                            )}
+                        </>
+                    ) : (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <History size={16} color={userTrade.pnl > 0 ? '#4ade80' : '#f87171'} />
+                            <span style={{ color: userTrade.pnl > 0 ? '#4ade80' : '#f87171', fontSize: '0.85rem', fontWeight: 'bold' }}>
+                                Bu işlem açıldı ve {userTrade.pnl > 0 ? 'KÂRLA' : 'ZARARLA'} sonlandırıldı ({userTrade.pnl > 0 ? '+' : ''}{userTrade.pnl.toFixed(2)}%). Tekrar açmayınız.
+                            </span>
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
     );
   };
@@ -694,14 +758,16 @@ export default function Dashboard({ user, onLogout }) {
                         </div>
                     </div>
 
-                    {/* +%2 Actives */}
+                    {/* $3 Sabit Margin PNL */}
                     <div style={{ background: 'rgba(255,255,255,0.03)', padding: '20px', borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-                        <div style={{ background: 'rgba(56, 189, 248, 0.15)', padding: '12px', borderRadius: '12px' }}>
-                            <Rocket color="#38bdf8" size={24} />
+                        <div style={{ background: closedUserTrades.reduce((acc, t) => acc + (t.pnl / 100 * 3), 0) >= 0 ? 'rgba(74, 222, 128, 0.15)' : 'rgba(248, 113, 113, 0.15)', padding: '12px', borderRadius: '12px' }}>
+                            <Rocket color={closedUserTrades.reduce((acc, t) => acc + (t.pnl / 100 * 3), 0) >= 0 ? '#4ade80' : '#f87171'} size={24} />
                         </div>
                         <div>
-                            <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{reachedTwoPercentCount}</div>
-                            <div style={{ fontSize: '0.85rem', color: '#888' }}>+%2 Kârdakiler</div>
+                            <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: closedUserTrades.reduce((acc, t) => acc + (t.pnl / 100 * 3), 0) >= 0 ? '#4ade80' : '#f87171' }}>
+                                ${closedUserTrades.reduce((acc, t) => acc + (t.pnl / 100 * 3), 0).toFixed(2)}
+                            </div>
+                            <div style={{ fontSize: '0.85rem', color: '#888' }}>3$ Sabit Kasa (Net)</div>
                         </div>
                     </div>
 
