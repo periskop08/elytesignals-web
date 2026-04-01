@@ -104,27 +104,39 @@ export default function Dashboard({ user, onLogout }) {
     return spotPnl * 10; // 10x Kaldıraç (ROE)
   };
 
-  const closedUserTrades = userTrades.filter(t => t.status === 'CLOSED');
-  const activeUserTrades = userTrades.filter(t => t.status === 'ACTIVE');
-  
-  const totalWins = closedUserTrades.filter(t => t.pnl > 0).length;
-  const totalLosses = closedUserTrades.filter(t => t.pnl <= 0).length;
+  // Kişisel Performans Kartları İçin Sinyal Geçmişi
+  const closedFavorites = favorites.filter(f => f.status === 'WIN' || f.status === 'LOSS');
+  const totalWins = closedFavorites.filter(f => f.status === 'WIN').length;
+  const totalLosses = closedFavorites.filter(f => f.status === 'LOSS').length;
   const closedSignals = totalWins + totalLosses;
   const winRate = closedSignals > 0 ? ((totalWins / closedSignals) * 100).toFixed(1) : 0;
   
-  const reachedTwoPercentCount = activeUserTrades.filter(t => {
+  const activeFavorites = favorites.filter(f => f.status === 'ACTIVE');
+  const reachedTwoPercentCount = activeFavorites.filter(t => {
       const sp = livePrices[t.symbol.replace('/', '')];
       if(!sp) return false;
       const p = t.type === 'LONG' ? ((sp - t.entryPrice)/t.entryPrice)*100 : ((t.entryPrice - sp)/t.entryPrice)*100;
       return p >= 2.0;
   }).length;
   
-  const totalFavPnl = activeUserTrades.reduce((acc, curr) => {
+  const totalFavPnl = activeFavorites.reduce((acc, curr) => {
       const sp = livePrices[curr.symbol.replace('/', '')];
       if(!sp) return acc;
       const roePnl = (curr.type === 'LONG' ? ((sp - curr.entryPrice)/curr.entryPrice)*100 : ((curr.entryPrice - sp)/curr.entryPrice)*100) * 10;
-      const usdProfit = 3 * (roePnl / 100); // 3$ Sabit Margin üzerinden NET Kâr/Zarar
+      const usdProfit = 3 * (roePnl / 100); 
       return acc + usdProfit;
+  }, 0);
+  
+  // Teorik $3 Net Kâr (Kapalı Sinyaller İçin)
+  const theoreticalClosedUsd = closedFavorites.reduce((acc, t) => {
+       let roePnl = 0;
+       if (t.status === 'WIN') {
+           roePnl = (t.type === 'LONG' ? ((t.targetPrice - t.entryPrice)/t.entryPrice)*100 : ((t.entryPrice - t.targetPrice)/t.entryPrice)*100) * 10;
+       } else if (t.status === 'LOSS') {
+           roePnl = (t.type === 'LONG' ? ((t.stopPrice - t.entryPrice)/t.entryPrice)*100 : ((t.entryPrice - t.stopPrice)/t.entryPrice)*100) * 10;
+           if(roePnl > 0) roePnl = -roePnl; // Loss is negative 
+       }
+       return acc + (3 * (roePnl / 100));
   }, 0);
 
   const totalPnlColor = totalFavPnl >= 0 ? '#4ade80' : '#f87171';
@@ -760,12 +772,12 @@ export default function Dashboard({ user, onLogout }) {
 
                     {/* $3 Sabit Margin PNL */}
                     <div style={{ background: 'rgba(255,255,255,0.03)', padding: '20px', borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-                        <div style={{ background: closedUserTrades.reduce((acc, t) => acc + (t.pnl / 100 * 3), 0) >= 0 ? 'rgba(74, 222, 128, 0.15)' : 'rgba(248, 113, 113, 0.15)', padding: '12px', borderRadius: '12px' }}>
-                            <Rocket color={closedUserTrades.reduce((acc, t) => acc + (t.pnl / 100 * 3), 0) >= 0 ? '#4ade80' : '#f87171'} size={24} />
+                        <div style={{ background: theoreticalClosedUsd >= 0 ? 'rgba(74, 222, 128, 0.15)' : 'rgba(248, 113, 113, 0.15)', padding: '12px', borderRadius: '12px' }}>
+                            <Rocket color={theoreticalClosedUsd >= 0 ? '#4ade80' : '#f87171'} size={24} />
                         </div>
                         <div>
-                            <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: closedUserTrades.reduce((acc, t) => acc + (t.pnl / 100 * 3), 0) >= 0 ? '#4ade80' : '#f87171' }}>
-                                ${closedUserTrades.reduce((acc, t) => acc + (t.pnl / 100 * 3), 0).toFixed(2)}
+                            <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: theoreticalClosedUsd >= 0 ? '#4ade80' : '#f87171' }}>
+                                ${theoreticalClosedUsd.toFixed(2)}
                             </div>
                             <div style={{ fontSize: '0.85rem', color: '#888' }}>3$ Sabit Kasa (Net)</div>
                         </div>
