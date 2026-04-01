@@ -58,9 +58,13 @@ export default function Dashboard({ user, onLogout }) {
       }
       setActiveTab(tabName);
       setSelectedSignal(null);
+      if (tabName === 'favorites') {
+          setFavFilter('ACTIVE');
+      }
   };
+
   useEffect(() => {
-     if (user && user.isVip === 0) {
+      if (user && user.isVip === 0) {
          setShowVipModal(true);
      } else {
          setShowVipModal(false);
@@ -626,7 +630,7 @@ export default function Dashboard({ user, onLogout }) {
                   <img src={user.photo || 'https://randomuser.me/api/portraits/lego/1.jpg'} style={{ width: 50, height: 50, borderRadius: 25, border: '2px solid rgba(255,255,255,0.1)' }}/>
                   <div>
                     <h1 style={{ fontSize: '1.6rem', fontWeight: '800', lineHeight: 1 }}>{user.name}</h1>
-                    <p style={{ color: '#888', fontSize: '0.9rem', marginTop: '4px' }}>İzleme listenizde {favorites.length} işlem var.</p>
+                    <p style={{ color: '#888', fontSize: '0.9rem', marginTop: '4px' }}>İzleme listenizde {favorites.filter(s => s.status === 'ACTIVE').length} işlem var.</p>
                   </div>
                </div>
                {favorites.some(s => s.status === 'ACTIVE') && (
@@ -648,7 +652,7 @@ export default function Dashboard({ user, onLogout }) {
                     
                     {/* TP Hit */}
                     <div 
-                        onClick={() => setFavFilter('WIN')}
+                        onClick={() => setFavFilter(favFilter === 'WIN' ? 'ACTIVE' : 'WIN')}
                         style={{ background: favFilter === 'WIN' ? 'rgba(74, 222, 128, 0.1)' : 'rgba(255,255,255,0.03)', border: favFilter === 'WIN' ? '1px solid rgba(74, 222, 128, 0.3)' : '1px solid transparent', padding: '20px', borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '16px', cursor: 'pointer', transition: 'all 0.2s' }}
                     >
                         <div style={{ background: 'rgba(74, 222, 128, 0.15)', padding: '12px', borderRadius: '12px' }}>
@@ -662,7 +666,7 @@ export default function Dashboard({ user, onLogout }) {
 
                     {/* SL Hit */}
                     <div 
-                        onClick={() => setFavFilter('LOSS')}
+                        onClick={() => setFavFilter(favFilter === 'LOSS' ? 'ACTIVE' : 'LOSS')}
                         style={{ background: favFilter === 'LOSS' ? 'rgba(248, 113, 113, 0.1)' : 'rgba(255,255,255,0.03)', border: favFilter === 'LOSS' ? '1px solid rgba(248, 113, 113, 0.3)' : '1px solid transparent', padding: '20px', borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '16px', cursor: 'pointer', transition: 'all 0.2s' }}
                     >
                         <div style={{ background: 'rgba(248, 113, 113, 0.15)', padding: '12px', borderRadius: '12px' }}>
