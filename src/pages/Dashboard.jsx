@@ -444,7 +444,7 @@ export default function Dashboard({ user, onLogout }) {
     const isNew = newSignalIds.includes(s.id);
 
     return (
-        <div className={`signal-card ${s.type} ${isNew ? 'new-signal-blink' : ''}`} key={isFavTab ? `fav-${s.favoriteId || s.id}` : s.id} style={{ padding: '16px', borderRadius: '20px', backgroundColor: '#162336', border: '1px solid rgba(255,255,255,0.08)', borderLeft: `5px solid ${isLong ? '#4ade80' : '#ef4444'}`, marginBottom: '12px', cursor: 'pointer', position: 'relative' }} onClick={() => setSelectedSignal(s)}>
+        <div className={`signal-card ${s.type} ${isNew ? 'new-signal-blink' : ''}`} key={isFavTab ? `fav-${s.favoriteId || s.id}` : s.id} style={{ marginBottom: '12px', cursor: 'pointer' }} onClick={() => setSelectedSignal(s)}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                 <div style={{ display: 'flex', alignItems: 'center' }}>
                     <div style={{ width: '42px', height: '42px', borderRadius: '12px', backgroundColor: isLong ? 'rgba(74, 222, 128, 0.15)' : 'rgba(248, 113, 113, 0.15)', display: 'flex', justifyContent: 'center', alignItems: 'center', marginRight: '14px' }}>
@@ -567,8 +567,15 @@ export default function Dashboard({ user, onLogout }) {
   if(!user) return null;
 
   return (
-    <div className="dashboard-layout">
+    <div className="dashboard-layout" style={{ position: 'relative' }}>
       
+      {/* Background Orbs for Glassmorphism */}
+      <div className="bg-orbs">
+        <div className="orb orb-1"></div>
+        <div className="orb orb-2"></div>
+        <div className="orb orb-3"></div>
+      </div>
+
       {/* MOBILE TOP HEADER */}
       <div className="mobile-top-header">
          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }} onClick={() => handleTabClick('markets')}>
