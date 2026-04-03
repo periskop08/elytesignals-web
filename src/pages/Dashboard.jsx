@@ -773,19 +773,19 @@ export default function Dashboard({ user, onLogout }) {
 
                 <div className="stats-scroll-container" style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '8px', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                    <style>{`.stats-scroll-container::-webkit-scrollbar { display: none; }`}</style>
-                   <div style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.02))', backdropFilter: 'blur(10px)', padding: '8px 16px', borderRadius: '12px', fontSize: '0.85rem', whiteSpace: 'nowrap', border: '1px solid rgba(255,255,255,0.15)', boxShadow: '0 4px 15px rgba(0,0,0,0.2), inset 0 0 10px rgba(255,255,255,0.02)' }}>
+                   <div style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.02))', backdropFilter: 'blur(10px)', padding: '8px 16px', borderRadius: '12px', fontSize: '0.85rem', whiteSpace: 'nowrap', border: '1px solid rgba(255,255,255,0.25)', boxShadow: '0 0 12px rgba(255,255,255,0.15), inset 0 0 10px rgba(255,255,255,0.05)' }}>
                        <span style={{ color: '#888', fontWeight: '500' }}>Aktif:</span> <span style={{ color: '#fff', fontWeight: '800', fontSize: '0.95rem', marginLeft: '6px' }}>{activeMainSignals.length}</span>
                    </div>
-                   <div style={{ background: 'linear-gradient(135deg, rgba(74, 222, 128, 0.1), rgba(74, 222, 128, 0.02))', backdropFilter: 'blur(10px)', padding: '8px 16px', borderRadius: '12px', fontSize: '0.85rem', whiteSpace: 'nowrap', border: '1px solid rgba(74, 222, 128, 0.3)', boxShadow: '0 4px 15px rgba(0,0,0,0.2), inset 0 0 10px rgba(74, 222, 128, 0.05)' }}>
+                   <div style={{ background: 'linear-gradient(135deg, rgba(74, 222, 128, 0.1), rgba(74, 222, 128, 0.02))', backdropFilter: 'blur(10px)', padding: '8px 16px', borderRadius: '12px', fontSize: '0.85rem', whiteSpace: 'nowrap', border: '1px solid rgba(255,255,255,0.25)', boxShadow: '0 0 12px rgba(255,255,255,0.15), inset 0 0 10px rgba(255,255,255,0.05)' }}>
                        <span style={{ color: '#4ade80', fontWeight: '800', fontSize: '0.95rem' }}>{mainLongs} LONG</span>
                    </div>
-                   <div style={{ background: 'linear-gradient(135deg, rgba(248, 113, 113, 0.1), rgba(248, 113, 113, 0.02))', backdropFilter: 'blur(10px)', padding: '8px 16px', borderRadius: '12px', fontSize: '0.85rem', whiteSpace: 'nowrap', border: '1px solid rgba(248, 113, 113, 0.3)', boxShadow: '0 4px 15px rgba(0,0,0,0.2), inset 0 0 10px rgba(248, 113, 113, 0.05)' }}>
+                   <div style={{ background: 'linear-gradient(135deg, rgba(248, 113, 113, 0.1), rgba(248, 113, 113, 0.02))', backdropFilter: 'blur(10px)', padding: '8px 16px', borderRadius: '12px', fontSize: '0.85rem', whiteSpace: 'nowrap', border: '1px solid rgba(255,255,255,0.25)', boxShadow: '0 0 12px rgba(255,255,255,0.15), inset 0 0 10px rgba(255,255,255,0.05)' }}>
                        <span style={{ color: '#f87171', fontWeight: '800', fontSize: '0.95rem' }}>{mainShorts} SHORT</span>
                    </div>
-                   <div style={{ background: 'linear-gradient(135deg, rgba(74, 222, 128, 0.05), rgba(74, 222, 128, 0.01))', backdropFilter: 'blur(10px)', padding: '8px 16px', borderRadius: '12px', fontSize: '0.85rem', whiteSpace: 'nowrap', border: '1px dotted rgba(74, 222, 128, 0.4)', boxShadow: '0 4px 15px rgba(0,0,0,0.2)' }}>
+                   <div style={{ background: 'linear-gradient(135deg, rgba(74, 222, 128, 0.05), rgba(74, 222, 128, 0.01))', backdropFilter: 'blur(10px)', padding: '8px 16px', borderRadius: '12px', fontSize: '0.85rem', whiteSpace: 'nowrap', border: '1px solid rgba(255,255,255,0.25)', boxShadow: '0 0 12px rgba(255,255,255,0.15), inset 0 0 10px rgba(255,255,255,0.05)' }}>
                        <span style={{ color: '#4ade80', fontWeight: '700', fontSize: '0.9rem' }}>{mainProfitCount} Kâr</span>
                    </div>
-                   <div style={{ background: 'linear-gradient(135deg, rgba(248, 113, 113, 0.05), rgba(248, 113, 113, 0.01))', backdropFilter: 'blur(10px)', padding: '8px 16px', borderRadius: '12px', fontSize: '0.85rem', whiteSpace: 'nowrap', border: '1px dotted rgba(248, 113, 113, 0.4)', boxShadow: '0 4px 15px rgba(0,0,0,0.2)' }}>
+                   <div style={{ background: 'linear-gradient(135deg, rgba(248, 113, 113, 0.05), rgba(248, 113, 113, 0.01))', backdropFilter: 'blur(10px)', padding: '8px 16px', borderRadius: '12px', fontSize: '0.85rem', whiteSpace: 'nowrap', border: '1px solid rgba(255,255,255,0.25)', boxShadow: '0 0 12px rgba(255,255,255,0.15), inset 0 0 10px rgba(255,255,255,0.05)' }}>
                        <span style={{ color: '#f87171', fontWeight: '700', fontSize: '0.9rem' }}>{mainLossCount} Zarar</span>
                    </div>
                 </div>
