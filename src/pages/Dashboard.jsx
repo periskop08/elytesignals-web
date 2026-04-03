@@ -3,7 +3,7 @@ import axios from 'axios';
 import { 
   Activity, Star, Clock, PieChart, 
   Send, Bot, Target, AlertTriangle, ShieldCheck, 
-  TrendingUp, TrendingDown, RefreshCcw, LogOut, Zap, ArrowLeft, MessageSquare, X, Rocket, History
+  TrendingUp, TrendingDown, RefreshCcw, LogOut, Zap, ArrowLeft, MessageSquare, X, Rocket, History, Flag
 } from 'lucide-react';
 
 export default function Dashboard({ user, onLogout }) {
@@ -13,6 +13,7 @@ export default function Dashboard({ user, onLogout }) {
   const [chatInput, setChatInput] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
   const [stats, setStats] = useState(null);
+  const [categoryFilter, setCategoryFilter] = useState('ALL');
   const [statsLoading, setStatsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('markets');
   const [favorites, setFavorites] = useState([]);
@@ -130,7 +131,9 @@ export default function Dashboard({ user, onLogout }) {
   // Teorik $3 Net Kâr (Kapalı Sinyaller İçin)
   const theoreticalClosedUsd = closedFavorites.reduce((acc, t) => {
        let roePnl = 0;
-       if (t.status === 'WIN') {
+       if (t.customPnl !== undefined && t.customPnl !== null) {
+           roePnl = t.customPnl;
+       } else if (t.status === 'WIN') {
            roePnl = (t.type === 'LONG' ? ((t.targetPrice - t.entryPrice)/t.entryPrice)*100 : ((t.entryPrice - t.targetPrice)/t.entryPrice)*100) * 10;
        } else if (t.status === 'LOSS') {
            roePnl = (t.type === 'LONG' ? ((t.stopPrice - t.entryPrice)/t.entryPrice)*100 : ((t.entryPrice - t.stopPrice)/t.entryPrice)*100) * 10;
@@ -155,8 +158,19 @@ export default function Dashboard({ user, onLogout }) {
       return s.status === favFilter;
   });
 
+  const isCryptoSymbol = (symbol) => {
+      if(!symbol) return true;
+      const s = String(symbol).toUpperCase();
+      return s.includes('USDT') || s.includes('USDC') || s.endsWith('BTC') || s.endsWith('ETH') || s.endsWith('PERP');
+  };
+
   // Taramalar İstatistikleri
-  const activeMainSignals = signals.filter(s => s.status === 'ACTIVE');
+  const activeMainSignals = signals.filter(s => {
+      if (s.status !== 'ACTIVE') return false;
+      if (categoryFilter === 'CRYPTO' && !isCryptoSymbol(s.symbol)) return false;
+      if (categoryFilter === 'ASSETS' && isCryptoSymbol(s.symbol)) return false;
+      return true;
+  });
   const mainLongs = activeMainSignals.filter(s => s.type === 'LONG').length;
   const mainShorts = activeMainSignals.filter(s => s.type === 'SHORT').length;
   let mainProfitCount = 0;
@@ -314,8 +328,12 @@ export default function Dashboard({ user, onLogout }) {
     
     // Optistic UI update
     setFavorites(prev => {
-        const isFav = prev.some(f => f.id === signal.id);
-        return isFav ? prev.filter(f => f.id !== signal.id) : [...prev, signal];
+        const isActiveFav = prev.some(f => f.id === signal.id && f.status === 'ACTIVE');
+        if (isActiveFav) {
+            return prev.filter(f => !(f.id === signal.id && f.status === 'ACTIVE'));
+        } else {
+            return [{...signal, status: 'ACTIVE', favoriteId: Date.now()}, ...prev];
+        }
     });
 
     try {
@@ -369,16 +387,36 @@ export default function Dashboard({ user, onLogout }) {
       }
   };
 
+  const closeFavoriteTrade = async (e, signalId, currentPnl) => {
+      e.stopPropagation();
+      if (!window.confirm(`Bu işlemi anlık PnL (%${currentPnl.toFixed(2)}) ile sonlandırmak istiyor musunuz?`)) return;
+      try {
+          await axios.post('/api/favorites/close', {
+              telegramId: user.telegramId,
+              signalId,
+              currentPnl
+          });
+          const res = await axios.get(`/api/favorites/${user.telegramId}?ts=${Date.now()}`);
+          setFavorites(res.data);
+      } catch (err) {
+          console.error("Favori kapatma hatası:", err);
+      }
+  };
+
   const renderSignalCard = (s, isFavTab) => {
     const isLong = s.type === 'LONG';
-    const isFav = favorites.some(f => f.id === s.id);
+    const isFav = favorites.some(f => f.id === s.id && f.status === 'ACTIVE');
     const userTrade = userTrades.find(t => t.signalId === s.id);
     const fmtPrice = val => parseFloat(val).toLocaleString('en-US', {maximumFractionDigits:5});
     
     const symbolKey = s.coin ? s.coin.replace('/', '') : s.symbol.replace('/', '');
     const currentPrice = livePrices[symbolKey];
     
-    let pnl = null;
+    // Geçmiş işlem kontrolü
+    const pastTrades = favorites.filter(f => f.id === s.id && f.status !== 'ACTIVE' && f.favoriteId !== s.favoriteId);
+    const hasPastTrades = pastTrades.length > 0;
+    
+    let pnl = s.customPnl !== undefined && s.customPnl !== null ? s.customPnl : null;
     let blinkClass = '';
     let isProfit = false;
     let isBigProfit = false;
@@ -406,7 +444,7 @@ export default function Dashboard({ user, onLogout }) {
     const isNew = newSignalIds.includes(s.id);
 
     return (
-        <div className={`signal-card ${s.type} ${isNew ? 'new-signal-blink' : ''}`} key={isFavTab ? `fav-${s.id}` : s.id} style={{ padding: '16px', borderRadius: '20px', backgroundColor: '#162336', border: '1px solid rgba(255,255,255,0.08)', borderLeft: `5px solid ${isLong ? '#4ade80' : '#ef4444'}`, marginBottom: '12px', cursor: 'pointer', position: 'relative' }} onClick={() => setSelectedSignal(s)}>
+        <div className={`signal-card ${s.type} ${isNew ? 'new-signal-blink' : ''}`} key={isFavTab ? `fav-${s.favoriteId || s.id}` : s.id} style={{ padding: '16px', borderRadius: '20px', backgroundColor: '#162336', border: '1px solid rgba(255,255,255,0.08)', borderLeft: `5px solid ${isLong ? '#4ade80' : '#ef4444'}`, marginBottom: '12px', cursor: 'pointer', position: 'relative' }} onClick={() => setSelectedSignal(s)}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                 <div style={{ display: 'flex', alignItems: 'center' }}>
                     <div style={{ width: '42px', height: '42px', borderRadius: '12px', backgroundColor: isLong ? 'rgba(74, 222, 128, 0.15)' : 'rgba(248, 113, 113, 0.15)', display: 'flex', justifyContent: 'center', alignItems: 'center', marginRight: '14px' }}>
@@ -414,16 +452,35 @@ export default function Dashboard({ user, onLogout }) {
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
                         <span style={{ color: '#fff', fontSize: '1.2rem', fontWeight: 'bold' }}>{s.symbol}</span>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px', flexWrap: 'wrap' }}>
-                            <span style={{ color: '#888', fontSize: '0.8rem' }}>{new Date(s.createdAt + 'Z').toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                            <div style={{ display: 'flex', alignItems: 'center', backgroundColor: 'rgba(56, 189, 248, 0.15)', padding: '2px 6px', borderRadius: '6px' }}>
-                                <Zap color="#38bdf8" size={10} fill="#38bdf8" style={{marginRight: 4}} />
-                                <span style={{color: '#38bdf8', fontSize: '0.75rem', fontWeight: 'bold'}}>{s.qualityScore || 0}</span>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '4px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span style={{ color: '#888', fontSize: '0.8rem' }}>{new Date(s.createdAt + 'Z').toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                                <div style={{ display: 'flex', alignItems: 'center', backgroundColor: 'rgba(56, 189, 248, 0.15)', padding: '2px 6px', borderRadius: '6px' }}>
+                                    <Zap color="#38bdf8" size={10} fill="#38bdf8" style={{marginRight: 4}} />
+                                    <span style={{color: '#38bdf8', fontSize: '0.75rem', fontWeight: 'bold'}}>{s.qualityScore || 0}</span>
+                                </div>
                             </div>
-                            {s.dailyCount > 1 && (
-                                <div style={{ display: 'flex', alignItems: 'center', backgroundColor: 'rgba(249, 115, 22, 0.15)', padding: '2px 6px', borderRadius: '6px' }}>
-                                    <AlertTriangle color="#f97316" size={10} style={{marginRight: 4}} />
-                                    <span style={{color: '#f97316', fontSize: '0.75rem', fontWeight: 'bold'}}>Uyarı: Günün {s.dailyCount}. Sinyali</span>
+                            
+                            {(s.dailyCount > 1 || (hasPastTrades && s.status === 'ACTIVE') || (s.warnings && s.warnings.includes('Flag'))) && (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                                    {s.warnings && s.warnings.includes('Flag') && (
+                                        <div style={{ display: 'flex', alignItems: 'center', backgroundColor: 'rgba(236, 72, 153, 0.15)', padding: '2px 6px', borderRadius: '6px' }}>
+                                            <Flag color="#ec4899" size={10} style={{marginRight: 4}} />
+                                            <span style={{color: '#ec4899', fontSize: '0.75rem', fontWeight: 'bold'}}>Bayrak Formasyonu</span>
+                                        </div>
+                                    )}
+                                    {s.dailyCount > 1 && (
+                                        <div style={{ display: 'flex', alignItems: 'center', backgroundColor: 'rgba(249, 115, 22, 0.15)', padding: '2px 6px', borderRadius: '6px' }}>
+                                            <AlertTriangle color="#f97316" size={10} style={{marginRight: 4}} />
+                                            <span style={{color: '#f97316', fontSize: '0.75rem', fontWeight: 'bold'}}>Gün: #{s.dailyCount}</span>
+                                        </div>
+                                    )}
+                                    {hasPastTrades && s.status === 'ACTIVE' && (
+                                        <div style={{ display: 'flex', alignItems: 'center', backgroundColor: 'rgba(168, 85, 247, 0.15)', padding: '2px 6px', borderRadius: '6px' }}>
+                                            <RefreshCcw color="#a855f7" size={10} style={{marginRight: 4}} />
+                                            <span style={{color: '#a855f7', fontSize: '0.75rem', fontWeight: 'bold'}}>Tekrar İşlem</span>
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>
@@ -432,8 +489,8 @@ export default function Dashboard({ user, onLogout }) {
         
                 <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
                     {pnl !== null && (
-                        <div className={`pnl-badge ${isProfit ? 'profit' : 'loss'} ${blinkClass}`}>
-                            {isProfit ? '+' : ''}{pnl.toFixed(2)}%
+                        <div className={`pnl-badge ${pnl > 0 ? 'profit' : 'loss'} ${blinkClass}`}>
+                            {pnl > 0 ? '+' : ''}{pnl.toFixed(2)}%
                         </div>
                     )}
                     <span style={{ color: isLong ? '#4ade80' : '#f87171', fontWeight: 'bold', fontSize: '0.95rem', letterSpacing: '0.5px' }}>{s.type}</span>
@@ -491,6 +548,16 @@ export default function Dashboard({ user, onLogout }) {
                             </span>
                         </div>
                     )}
+                </div>
+            )}
+            {!userTrade && isFavTab && s.status === 'ACTIVE' && (
+                <div style={{ marginTop: '12px' }}>
+                    <button 
+                        onClick={(e) => closeFavoriteTrade(e, s.id, pnl || 0)}
+                        style={{ width: '100%', background: pnl >= 0 ? 'rgba(74, 222, 128, 0.1)' : 'rgba(239, 68, 68, 0.1)', color: pnl >= 0 ? '#4ade80' : '#ef4444', border: `1px solid ${pnl >= 0 ? 'rgba(74, 222, 128, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`, padding: '10px', borderRadius: '8px', fontSize: '0.9rem', fontWeight: 'bold', cursor: 'pointer', transition: 'all 0.2s', textAlign: 'center' }}
+                    >
+                        İŞLEMİ SONLANDIR
+                    </button>
                 </div>
             )}
         </div>
@@ -598,6 +665,28 @@ export default function Dashboard({ user, onLogout }) {
                     </div>
                 </div>
 
+                {favorites.filter(f => f.id === selectedSignal.id && f.status !== 'ACTIVE').length > 0 && (
+                    <div style={{ marginTop: '20px', padding: '16px', backgroundColor: '#162336', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                        <h3 style={{ fontSize: '1.2rem', color: '#fff', marginBottom: '12px', display: 'flex', alignItems: 'center' }}>
+                            <History size={18} color="#a855f7" style={{ marginRight: '8px' }} />
+                            Kişisel Geçmişte Bu Sinyaldeki İşlemlerin
+                        </h3>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            {favorites.filter(f => f.id === selectedSignal.id && f.status !== 'ACTIVE').map(past => (
+                                <div key={`past-${past.favoriteId}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.2)', padding: '12px', borderRadius: '12px' }}>
+                                    <span style={{ color: '#888', fontSize: '0.9rem' }}>{new Date(past.closedAt + 'Z').toLocaleString('tr-TR')}</span>
+                                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                                        <span style={{ color: past.status === 'WIN' ? '#4ade80' : '#f87171', fontWeight: 'bold' }}>{past.status}</span>
+                                        <div style={{ padding: '4px 8px', borderRadius: '6px', backgroundColor: past.status === 'WIN' ? 'rgba(74, 222, 128, 0.1)' : 'rgba(248, 113, 113, 0.1)' }}>
+                                            <span style={{ color: past.status === 'WIN' ? '#4ade80' : '#f87171', fontWeight: 'bold' }}>%{past.customPnl?.toFixed(2)}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
                 {/* PREVIOUS TRADES HISTORY (Conditionally Displayed if fetched) */}
                 {prevSignalLoading ? (
                     <div style={{ padding: '24px', textAlign: 'center', color: '#888' }}>Geçmiş Sinyaller Yükleniyor...</div>
@@ -652,7 +741,18 @@ export default function Dashboard({ user, onLogout }) {
           <>
              <div style={{ marginBottom: '1rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '8px' }}>
-                    <h1 style={{ fontSize: '2rem', margin: 0, fontWeight: '800' }}>Canlı Akış</h1>
+                    <div style={{display: 'flex', alignItems: 'center', gap: '15px'}}>
+                        <h1 style={{ fontSize: '2rem', margin: 0, fontWeight: '800' }}>Canlı Akış</h1>
+                        <select 
+                            value={categoryFilter}
+                            onChange={(e) => setCategoryFilter(e.target.value)}
+                            style={{ background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', padding: '6px 12px', borderRadius: '12px', fontSize: '0.9rem', cursor: 'pointer', outline: 'none' }}
+                        >
+                            <option value="ALL" style={{color: '#000'}}>Hepsi</option>
+                            <option value="CRYPTO" style={{color: '#000'}}>Kripto</option>
+                            <option value="ASSETS" style={{color: '#000'}}>Varlıklar</option>
+                        </select>
+                    </div>
                     {activeMainSignals.length > 0 && (
                         <div className={marketPnlBlinkClass} style={{ background: 'rgba(255,255,255,0.03)', padding: '6px 14px', borderRadius: '10px', border: marketPnlBlinkClass ? undefined : `1px solid ${marketPnlColor}66`, transition: 'all 0.3s' }}>
                             <span style={{ color: '#888', fontSize: '0.9rem', marginRight: '6px' }}>Net:</span>
@@ -691,13 +791,13 @@ export default function Dashboard({ user, onLogout }) {
                </div>
             ) : (
                 <div className="signals-grid">
-                    {signals.filter(s => s.status === 'ACTIVE').length === 0 ? (
+                    {activeMainSignals.length === 0 ? (
                         <div className="glass" style={{ padding: '3rem', textAlign: 'center', gridColumn: '1 / -1', borderRadius: '20px' }}>
                             <Target size={40} color="#888" style={{ marginBottom: '1rem' }} />
                             <h3 style={{ color: '#aaa', marginBottom: '0.5rem' }}>Aktif Fırsat Yok</h3>
                             <p style={{ color: '#666' }}>Piyasa koşulları şu an Elliott sarmalına uygun değil, lütfen bekleyin.</p>
                         </div>
-                    ) : signals.filter(s => s.status === 'ACTIVE').map(s => renderSignalCard(s, false))}
+                    ) : activeMainSignals.map(s => renderSignalCard(s, false))}
                 </div>
             )}
           </>
