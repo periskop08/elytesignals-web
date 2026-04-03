@@ -20,6 +20,32 @@
     <link rel="stylesheet" href="/style.css">
 </head>
 <body>
+    <style>
+      #app-splash {
+        position: fixed;
+        top: 0; left: 0; width: 100vw; height: 100vh;
+        background-color: #0D1623;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 99999;
+        transition: opacity 0.5s ease;
+      }
+      #app-splash img {
+        width: 120px;
+        height: 120px;
+        border-radius: 20px;
+        animation: pulseLogo 1.5s infinite alternate;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      }
+      @keyframes pulseLogo {
+        from { transform: scale(1); opacity: 0.9; }
+        to { transform: scale(1.05); opacity: 1; }
+      }
+    </style>
+    <div id="app-splash">
+      <img src="/logo.jpg" alt="Elyte Load" />
+    </div>
     <div id="app"></div>
     <script type="module" src="/main.jsx"></script>
 </body>
