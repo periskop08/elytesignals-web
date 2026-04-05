@@ -1222,7 +1222,7 @@ export default function Dashboard({ user, onLogout }) {
          <div className="chat-messages">
              {chatLog.map((chat, i) => (
                  <div key={i} className={`chat-bubble ${chat.sender}`}>
-                     <p>{chat.text}</p>
+                     <p style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{chat.text}</p>
                  </div>
              ))}
          </div>
