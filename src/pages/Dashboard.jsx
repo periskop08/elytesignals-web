@@ -13,6 +13,7 @@ export default function Dashboard({ user, onLogout }) {
   const [chatInput, setChatInput] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
   const [stats, setStats] = useState(null);
+  const [macroData, setMacroData] = useState(null);
   const [categoryFilter, setCategoryFilter] = useState('ALL');
   const [statsLoading, setStatsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('markets');
@@ -20,6 +21,8 @@ export default function Dashboard({ user, onLogout }) {
   const [userTrades, setUserTrades] = useState([]);
   const [closingTradeId, setClosingTradeId] = useState(null);
   const [selectedSignal, setSelectedSignal] = useState(null);
+  const [adminBalance, setAdminBalance] = useState(null);
+  const isAdmin = user?.telegramId?.toString() === '1194576674';
   const [livePrices, setLivePrices] = useState({});
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [favFilter, setFavFilter] = useState('ACTIVE');
@@ -124,12 +127,17 @@ export default function Dashboard({ user, onLogout }) {
       const sp = livePrices[curr.symbol.replace('/', '')];
       if(!sp) return acc;
       const roePnl = (curr.type === 'LONG' ? ((sp - curr.entryPrice)/curr.entryPrice)*100 : ((curr.entryPrice - sp)/curr.entryPrice)*100) * 10;
-      const usdProfit = 3 * (roePnl / 100); 
+      let usdProfit = 10 * (roePnl / 100); 
+      if (user?.isAdmin) usdProfit -= 0.11;
       return acc + usdProfit;
   }, 0);
   
-  // Teorik $3 Net Kâr (Kapalı Sinyaller İçin)
+  // Teorik $10 Net Kâr (Kapalı Sinyaller İçin - Net Fatura Varsa Kullanır)
   const theoreticalClosedUsd = closedFavorites.reduce((acc, t) => {
+       if (t.netPnlUsd !== undefined && t.netPnlUsd !== null) {
+           return acc + parseFloat(t.netPnlUsd);
+       }
+       
        let roePnl = 0;
        if (t.customPnl !== undefined && t.customPnl !== null) {
            roePnl = t.customPnl;
@@ -139,7 +147,9 @@ export default function Dashboard({ user, onLogout }) {
            roePnl = (t.type === 'LONG' ? ((t.stopPrice - t.entryPrice)/t.entryPrice)*100 : ((t.entryPrice - t.stopPrice)/t.entryPrice)*100) * 10;
            if(roePnl > 0) roePnl = -roePnl; // Loss is negative 
        }
-       return acc + (3 * (roePnl / 100));
+       let usdProfit = 10 * (roePnl / 100);
+       if (user?.isAdmin) usdProfit -= 0.22;
+       return acc + usdProfit;
   }, 0);
 
   const totalPnlColor = totalFavPnl >= 0 ? '#4ade80' : '#f87171';
@@ -154,7 +164,7 @@ export default function Dashboard({ user, onLogout }) {
 
   // Sinyal Filitreleme
   const displayedFavorites = favorites.filter(s => {
-      if (favFilter === 'ALL') return true;
+      if (favFilter === 'ALL') return s.status === 'ACTIVE';
       return s.status === favFilter;
   });
 
@@ -199,13 +209,25 @@ export default function Dashboard({ user, onLogout }) {
     if (user && user.telegramId) {
        axios.get(`/api/favorites/${user.telegramId}?ts=${Date.now()}`).then(res => setFavorites(res.data)).catch(console.error);
        axios.get(`/api/user-trades/${user.telegramId}?ts=${Date.now()}`).then(res => setUserTrades(res.data)).catch(console.error);
+       if (isAdmin) {
+           axios.get(`/api/admin/balance/${user.telegramId}?ts=${Date.now()}`)
+               .then(res => { if (res.data.success) setAdminBalance(res.data.balance); })
+               .catch(e => console.error("Admin balance error:", e.response?.data || e.message));
+       }
     }
+    axios.get(`/api/macro?ts=${Date.now()}`).then(res => setMacroData(res.data)).catch(console.error);
 
     const interval = setInterval(() => {
         fetchSignals();
+        axios.get(`/api/macro?ts=${Date.now()}`).then(res => setMacroData(res.data)).catch(console.error);
         if (user && user.telegramId) {
             axios.get(`/api/favorites/${user.telegramId}?ts=${Date.now()}`).then(res => setFavorites(res.data)).catch(console.error);
             axios.get(`/api/user-trades/${user.telegramId}?ts=${Date.now()}`).then(res => setUserTrades(res.data)).catch(console.error);
+            if (isAdmin) {
+                axios.get(`/api/admin/balance/${user.telegramId}?ts=${Date.now()}`)
+                    .then(res => { if (res.data.success) setAdminBalance(res.data.balance); })
+                    .catch(e => console.error("Admin balance error:", e.response?.data || e.message));
+            }
         }
     }, 60000);
     const priceInterval = setInterval(fetchPrices, 5000);
@@ -326,15 +348,17 @@ export default function Dashboard({ user, onLogout }) {
   const toggleFavorite = async (signal) => {
     if (!user || !user.telegramId) return;
     
-    // Optistic UI update
-    setFavorites(prev => {
-        const isActiveFav = prev.some(f => f.id === signal.id && f.status === 'ACTIVE');
-        if (isActiveFav) {
-            return prev.filter(f => !(f.id === signal.id && f.status === 'ACTIVE'));
-        } else {
-            return [{...signal, status: 'ACTIVE', favoriteId: Date.now()}, ...prev];
+    const isActiveFav = favorites.some(f => (f.id === signal.id || f.signalId === signal.id) && f.status === 'ACTIVE');
+    if (isActiveFav) {
+        alert("Bu işlem zaten açık durumdadır. İşlemi kapatmak için aktif favorilerinizdeki 'İşlemi Sonlandır' butonunu kullanın.");
+        return;
+    }
+
+    if (user.isAdmin) {
+        if(!window.confirm(`Borsada ${signal.symbol} sinyali için GERÇEK PARA ($10 risk) ile manuel işlem açılacaktır. Onaylıyor musunuz?`)){
+            return;
         }
-    });
+    }
 
     try {
         await axios.post('/api/favorites/toggle', {
@@ -346,6 +370,7 @@ export default function Dashboard({ user, onLogout }) {
         const res = await axios.get(`/api/favorites/${user.telegramId}?ts=${Date.now()}`);
         setFavorites(res.data);
     } catch (err) {
+        alert("Borsada işlem açılamadı: " + (err.response?.data?.error || err.message));
         console.error("Favori toggle error:", err);
     }
   };
@@ -380,6 +405,8 @@ export default function Dashboard({ user, onLogout }) {
           await axios.post('/api/user-trades/close', { telegramId: user.telegramId, tradeId });
           const res = await axios.get(`/api/user-trades/${user.telegramId}?ts=${Date.now()}`);
           setUserTrades(res.data);
+          const favRes = await axios.get(`/api/favorites/${user.telegramId}?ts=${Date.now()}`);
+          setFavorites(favRes.data);
       } catch(err) {
           alert("Hata: " + (err.response?.data?.error || err.message));
       } finally {
@@ -389,7 +416,8 @@ export default function Dashboard({ user, onLogout }) {
 
   const closeFavoriteTrade = async (e, signalId, currentPnl) => {
       e.stopPropagation();
-      if (!window.confirm(`Bu işlemi anlık PnL (%${currentPnl.toFixed(2)}) ile sonlandırmak istiyor musunuz?`)) return;
+      const actionText = user.isAdmin ? "BingX borsasındaki canlı işlemi anlık PnL ile" : "Bu işlemi sanal takipten";
+      if (!window.confirm(`(${actionText}) sonlandırmak istiyor musunuz?`)) return;
       try {
           await axios.post('/api/favorites/close', {
               telegramId: user.telegramId,
@@ -399,6 +427,7 @@ export default function Dashboard({ user, onLogout }) {
           const res = await axios.get(`/api/favorites/${user.telegramId}?ts=${Date.now()}`);
           setFavorites(res.data);
       } catch (err) {
+          alert("İşlem kapatılırken hata oluştu: " + (err.response?.data?.error || err.message));
           console.error("Favori kapatma hatası:", err);
       }
   };
@@ -544,20 +573,29 @@ export default function Dashboard({ user, onLogout }) {
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <History size={16} color={userTrade.pnl > 0 ? '#4ade80' : '#f87171'} />
                             <span style={{ color: userTrade.pnl > 0 ? '#4ade80' : '#f87171', fontSize: '0.85rem', fontWeight: 'bold' }}>
-                                Bu işlem açıldı ve {userTrade.pnl > 0 ? 'KÂRLA' : 'ZARARLA'} sonlandırıldı ({userTrade.pnl > 0 ? '+' : ''}{userTrade.pnl.toFixed(2)}%). Tekrar açmayınız.
+                                Önceki İşlem: {userTrade.pnl > 0 ? 'KÂR' : 'ZARAR'} ({userTrade.pnl > 0 ? '+' : ''}{userTrade.pnl.toFixed(2)}%).
                             </span>
                         </div>
                     )}
                 </div>
             )}
-            {!userTrade && isFavTab && s.status === 'ACTIVE' && (
+            {(!userTrade || userTrade.status !== 'ACTIVE') && isFavTab && s.status === 'ACTIVE' && (
                 <div style={{ marginTop: '12px' }}>
-                    <button 
-                        onClick={(e) => closeFavoriteTrade(e, s.id, pnl || 0)}
-                        style={{ width: '100%', background: pnl >= 0 ? 'rgba(74, 222, 128, 0.1)' : 'rgba(239, 68, 68, 0.1)', color: pnl >= 0 ? '#4ade80' : '#ef4444', border: `1px solid ${pnl >= 0 ? 'rgba(74, 222, 128, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`, padding: '10px', borderRadius: '8px', fontSize: '0.9rem', fontWeight: 'bold', cursor: 'pointer', transition: 'all 0.2s', textAlign: 'center' }}
-                    >
-                        İŞLEMİ SONLANDIR
-                    </button>
+                    {user.isAdmin ? (
+                        <button 
+                            onClick={(e) => closeFavoriteTrade(e, s.id, pnl || 0)}
+                            style={{ width: '100%', background: pnl >= 0 ? 'rgba(74, 222, 128, 0.1)' : 'rgba(239, 68, 68, 0.1)', color: pnl >= 0 ? '#4ade80' : '#ef4444', border: `1px solid ${pnl >= 0 ? 'rgba(74, 222, 128, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`, padding: '10px', borderRadius: '8px', fontSize: '0.9rem', fontWeight: 'bold', cursor: 'pointer', transition: 'all 0.2s', textAlign: 'center' }}
+                        >
+                            İŞLEMİ SONLANDIR (BİNGX)
+                        </button>
+                    ) : (
+                        <button 
+                            onClick={(e) => closeFavoriteTrade(e, s.id, pnl || 0)}
+                            style={{ width: '100%', background: 'rgba(255, 255, 255, 0.05)', color: '#fff', border: '1px solid rgba(255, 255, 255, 0.1)', padding: '10px', borderRadius: '8px', fontSize: '0.9rem', fontWeight: 'bold', cursor: 'pointer', transition: 'all 0.2s', textAlign: 'center' }}
+                        >
+                            TAKİP LİSTESİNDEN ÇIKAR
+                        </button>
+                    )}
                 </div>
             )}
         </div>
@@ -663,7 +701,7 @@ export default function Dashboard({ user, onLogout }) {
                     
                     <div style={{ height: '480px', width: '100%' }}>
                         <iframe 
-                            src={`https://s.tradingview.com/widgetembed/?frameElementId=tradingview_chart&symbol=BYBIT%3A${(selectedSignal.coin || selectedSignal.symbol).replace('/', '')}.P&interval=60&symboledit=1&saveimage=1&toolbarbg=f1f3f6&studies=%5B%5D&theme=dark&style=1&timezone=Etc%2FUTC&studies_overrides=%7B%7D&overrides=%7B%7D&enabled_features=%5B%5D&disabled_features=%5B%5D&locale=tr&utm_source=localhost&utm_medium=widget&utm_campaign=chart&utm_term=BYBIT%3A${(selectedSignal.coin || selectedSignal.symbol).replace('/', '')}.P`}
+                            src={`https://s.tradingview.com/widgetembed/?frameElementId=tradingview_chart&symbol=BINGX%3A${(selectedSignal.coin || selectedSignal.symbol).replace('/', '')}.P&interval=60&symboledit=1&saveimage=1&toolbarbg=f1f3f6&studies=%5B%5D&theme=dark&style=1&timezone=Etc%2FUTC&studies_overrides=%7B%7D&overrides=%7B%7D&enabled_features=%5B%5D&disabled_features=%5B%5D&locale=tr&utm_source=localhost&utm_medium=widget&utm_campaign=chart&utm_term=BINGX%3A${(selectedSignal.coin || selectedSignal.symbol).replace('/', '')}.P`}
                             style={{ width: '100%', height: '100%', border: 'none' }}
                             allowTransparency="true"
                             scrolling="no"
@@ -746,6 +784,30 @@ export default function Dashboard({ user, onLogout }) {
           <>
             {activeTab === 'markets' && (
           <>
+             {macroData && macroData.btc && macroData.dxy && (
+             <div style={{ 
+                 display: 'flex', gap: '16px', marginBottom: '24px', 
+                 background: 'rgba(255, 255, 255, 0.03)', 
+                 border: '1px solid rgba(255, 255, 255, 0.05)', 
+                 borderRadius: '16px', padding: '16px', flexWrap: 'wrap',
+                 backdropFilter: 'blur(10px)'
+             }}>
+                 <div style={{ flex: '1 1 200px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                     <span style={{ fontSize: '0.8rem', color: '#888', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>Makro Pusula</span>
+                     <h3 style={{ fontSize: '1.2rem', color: '#fff', margin: 0 }}>Piyasa Yönü</h3>
+                 </div>
+                 <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                     <div style={{ background: macroData.btc.type === 'BULL' ? 'rgba(74, 222, 128, 0.1)' : 'rgba(248, 113, 113, 0.1)', border: `1px solid ${macroData.btc.type === 'BULL' ? 'rgba(74,222,128,0.3)' : 'rgba(248,113,113,0.3)'}`, borderRadius: '12px', padding: '10px 16px', display: 'flex', flexDirection: 'column' }}>
+                         <span style={{ fontSize: '0.75rem', color: macroData.btc.type === 'BULL' ? '#4ade80' : '#f87171' }}>👑 BRAND TREND (BTC)</span>
+                         <span style={{ fontSize: '1rem', fontWeight: 'bold', color: '#fff' }}>{macroData.btc.trend} <span style={{ fontSize: '0.8rem', opacity: 0.7, color: '#aaa' }}>({macroData.btc.smc})</span></span>
+                     </div>
+                     <div style={{ background: macroData.dxy.type === 'BEAR' ? 'rgba(74, 222, 128, 0.1)' : 'rgba(248, 113, 113, 0.1)', border: `1px solid ${macroData.dxy.type === 'BEAR' ? 'rgba(74,222,128,0.3)' : 'rgba(248,113,113,0.3)'}`, borderRadius: '12px', padding: '10px 16px', display: 'flex', flexDirection: 'column' }}>
+                         <span style={{ fontSize: '0.75rem', color: macroData.dxy.type === 'BEAR' ? '#4ade80' : '#f87171' }}>💵 DOLAR GÜCÜ (DXY)</span>
+                         <span style={{ fontSize: '1rem', fontWeight: 'bold', color: '#fff' }}>{macroData.dxy.trend} <span style={{ fontSize: '0.8rem', opacity: 0.7, color: '#aaa' }}>({macroData.dxy.smc})</span></span>
+                     </div>
+                 </div>
+             </div>
+             )}
              <div style={{ marginBottom: '1rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '8px' }}>
                     <div style={{display: 'flex', alignItems: 'center', gap: '15px'}}>
@@ -877,16 +939,16 @@ export default function Dashboard({ user, onLogout }) {
                         </div>
                     </div>
 
-                    {/* $3 Sabit Margin PNL */}
+                    {/* $10 Sabit Margin PNL / Kasa Tutarı */}
                     <div style={{ background: 'rgba(255,255,255,0.03)', padding: '20px', borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-                        <div style={{ background: theoreticalClosedUsd >= 0 ? 'rgba(74, 222, 128, 0.15)' : 'rgba(248, 113, 113, 0.15)', padding: '12px', borderRadius: '12px' }}>
-                            <Rocket color={theoreticalClosedUsd >= 0 ? '#4ade80' : '#f87171'} size={24} />
+                        <div style={{ background: (isAdmin && adminBalance) || theoreticalClosedUsd >= 0 ? 'rgba(74, 222, 128, 0.15)' : 'rgba(248, 113, 113, 0.15)', padding: '12px', borderRadius: '12px' }}>
+                            <Rocket color={(isAdmin && adminBalance) || theoreticalClosedUsd >= 0 ? '#4ade80' : '#f87171'} size={24} />
                         </div>
                         <div>
-                            <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: theoreticalClosedUsd >= 0 ? '#4ade80' : '#f87171' }}>
-                                ${theoreticalClosedUsd.toFixed(2)}
+                            <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: (isAdmin && adminBalance) || theoreticalClosedUsd >= 0 ? '#4ade80' : '#f87171' }}>
+                                ${isAdmin && adminBalance !== null ? adminBalance.toFixed(2) : (500 + theoreticalClosedUsd).toFixed(2)}
                             </div>
-                            <div style={{ fontSize: '0.85rem', color: '#888' }}>3$ Sabit Kasa (Net)</div>
+                            <div style={{ fontSize: '0.85rem', color: '#888' }}>{isAdmin ? 'Gerçek BingX Kasa' : 'Güncel Kasa Hesabı'}</div>
                         </div>
                     </div>
 
@@ -917,17 +979,24 @@ export default function Dashboard({ user, onLogout }) {
                     <h2 style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '8px', color: '#fff' }}>
                         <PieChart size={28} color="#4ade80" /> Elyte İstatistikleri
                     </h2>
-                    <p style={{ color: '#888', fontSize: '0.85rem', marginBottom: '2rem' }}>Her sinyale sabit 30$ yatırıldığı varsayılarak hesaplanan tahmini cüzdan durumudur.</p>
+                    <p style={{ color: '#888', fontSize: '0.85rem', marginBottom: '2rem' }}>Aşağıdaki veriler, $500 ana kasa ve işlem başına $10 (1R) risk alındığı varsayılarak hesaplanmaktadır. Borsanın kesmiş olduğu işlem açma-kapama komisyonları, slippage (kayma) ve fonlama giderleri de bu tabloya net olarak dahil edilmiştir.</p>
 
                     <div style={{
                         background: '#162336', padding: '1.5rem', borderRadius: '20px', 
                         border: '1px solid rgba(255,255,255,0.08)', marginBottom: '1.5rem',
                         textAlign: 'center'
                     }}>
-                        <p style={{ color: '#aaa', fontSize: '0.9rem', marginBottom: '0.5rem' }}>Tahmini Cüzdan Büyümesi (PnL)</p>
-                        <h1 style={{ fontSize: '2.5rem', fontWeight: 'bold', margin: 0, color: stats.totalProfit >= 0 ? '#4ade80' : '#f87171' }}>
-                            {stats.totalProfit >= 0 ? '+' : ''}${stats.totalProfit.toFixed(2)}
+                        <p style={{ color: '#aaa', fontSize: '0.9rem', marginBottom: '0.5rem' }}>
+                           {isAdmin ? 'Gerçek Anlık Borsa (BingX) Seçkin Kasa' : 'Güncel Kasa Bakiyesi (Başlangıç: $500)'}
+                        </p>
+                        <h1 style={{ fontSize: '2.5rem', fontWeight: 'bold', margin: 0, color: (isAdmin && adminBalance) || stats.totalProfit >= 0 ? '#4ade80' : '#f87171' }}>
+                            ${isAdmin && adminBalance !== null ? adminBalance.toFixed(2) : (500 + stats.totalProfit).toFixed(2)}
                         </h1>
+                        <p style={{marginTop: '10px'}}>
+                            <span style={{color: (isAdmin && adminBalance && adminBalance >= 500) || (!isAdmin && stats.totalProfit >= 0) ? '#4ade80' : '#f87171', fontWeight: 'bold'}}>
+                                {isAdmin && adminBalance !== null ? (adminBalance >= 500 ? '+' : '') + (adminBalance - 500).toFixed(2) : (stats.totalProfit >= 0 ? '+' : '') + stats.totalProfit.toFixed(2)} Net Büyüme (PnL)
+                            </span>
+                        </p>
                     </div>
 
                     <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
