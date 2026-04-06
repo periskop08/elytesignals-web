@@ -1625,11 +1625,13 @@ export default function Dashboard({ user, onLogout }) {
                       </div>
                   </div>
 
-                  <div style={{ padding: '12px', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', borderLeft: `4px solid ${selectedStock.redFlag ? '#ef4444' : '#10b981'}` }}>
-                      <p style={{ margin: 0, color: '#cbd5e1', fontSize: '0.85rem', lineHeight: '1.5' }}>
-                          {selectedStock.flagReason || (selectedStock.score > 1.2 ? "Şirketin büyüme hızı, fiyatından daha avantajlı konumda. Algoritmamız bunu FIRSAT olarak etiketliyor." : "Şirketin kâr büyümesi ve fiyatlanması standart normlar içinde. Yüksek getiri için yeterli uçurum bulunmuyor.")}
-                      </p>
-                  </div>
+                  {selectedStock.aiReport && (
+                      <div style={{ padding: '12px', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', borderLeft: `4px solid ${selectedStock.redFlag ? '#ef4444' : '#10b981'}` }}>
+                          <p style={{ margin: 0, color: '#cbd5e1', fontSize: '0.85rem', lineHeight: '1.5' }}>
+                              {selectedStock.flagReason || (selectedStock.score > 1.2 ? "Şirketin büyüme hızı, fiyatından daha avantajlı konumda. Algoritmamız bunu FIRSAT olarak etiketliyor." : "Şirketin kâr büyümesi ve fiyatlanması standart normlar içinde. Yüksek getiri için yeterli uçurum bulunmuyor.")}
+                          </p>
+                      </div>
+                  )}
 
                   <button 
                       onClick={() => setSelectedStock(null)}
