@@ -1,10 +1,30 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { 
-  Activity, Star, Clock, PieChart, 
+  Activity, Star, Clock, PieChart, Home, Flame, Map, Wallet,
   Send, Bot, Target, AlertTriangle, ShieldCheck, 
-  TrendingUp, TrendingDown, RefreshCcw, LogOut, Zap, ArrowLeft, MessageSquare, X, Rocket, History, Flag
+  TrendingUp, TrendingDown, RefreshCcw, LogOut, Zap, ArrowLeft, MessageSquare, X, Rocket, History, Flag, Briefcase, ThumbsUp
 } from 'lucide-react';
+
+import PortfolioManager from '../components/PortfolioManager';
+
+const renderMarkdown = (text) => {
+    if (!text) return "AI analiz raporu bekleniyor...";
+    return text.split('\n').map((line, i) => {
+        let formattedLine = line.replace(/\*\*(.*?)\*\*/g, '<strong style="color: #fff">$1</strong>');
+        if (line.startsWith('### ')) {
+            return <h3 key={i} style={{ color: '#60a5fa', margin: '16px 0 8px 0', fontSize: '1.1rem' }} dangerouslySetInnerHTML={{ __html: formattedLine.replace('### ', '') }} />;
+        } else if (line.trim().startsWith('- ')) {
+            return <li key={i} style={{ marginLeft: '16px', marginBottom: '6px', lineHeight: '1.6', color: '#cbd5e1' }} dangerouslySetInnerHTML={{ __html: formattedLine.replace('- ', '') }} />;
+        } else if (line.match(/^\d+\)/)) {
+            return <h4 key={i} style={{ color: '#94a3b8', margin: '14px 0 6px 0', fontSize: '1.05rem', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '4px' }} dangerouslySetInnerHTML={{ __html: formattedLine }} />;
+        } else if (line.trim() === '') {
+            return <br key={i} />;
+        } else {
+            return <div key={i} style={{ margin: '6px 0', lineHeight: '1.6', color: '#cbd5e1' }} dangerouslySetInnerHTML={{ __html: formattedLine }} />;
+        }
+    });
+};
 
 export default function Dashboard({ user, onLogout }) {
   const [signals, setSignals] = useState([]);
@@ -13,10 +33,13 @@ export default function Dashboard({ user, onLogout }) {
   const [chatInput, setChatInput] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
   const [stats, setStats] = useState(null);
+  const [weeklyStats, setWeeklyStats] = useState(null);
   const [macroData, setMacroData] = useState(null);
+  const [riskData, setRiskData] = useState(null);
+  const [selectedStock, setSelectedStock] = useState(null);
   const [categoryFilter, setCategoryFilter] = useState('ALL');
   const [statsLoading, setStatsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('markets');
+  const [activeTab, setActiveTab] = useState('home');
   const [favorites, setFavorites] = useState([]);
   const [userTrades, setUserTrades] = useState([]);
   const [closingTradeId, setClosingTradeId] = useState(null);
@@ -216,10 +239,12 @@ export default function Dashboard({ user, onLogout }) {
        }
     }
     axios.get(`/api/macro?ts=${Date.now()}`).then(res => setMacroData(res.data)).catch(console.error);
+    axios.get(`/api/macro-risk?ts=${Date.now()}`).then(res => setRiskData(res.data)).catch(console.error);
 
     const interval = setInterval(() => {
         fetchSignals();
         axios.get(`/api/macro?ts=${Date.now()}`).then(res => setMacroData(res.data)).catch(console.error);
+        axios.get(`/api/macro-risk?ts=${Date.now()}`).then(res => setRiskData(res.data)).catch(console.error);
         if (user && user.telegramId) {
             axios.get(`/api/favorites/${user.telegramId}?ts=${Date.now()}`).then(res => setFavorites(res.data)).catch(console.error);
             axios.get(`/api/user-trades/${user.telegramId}?ts=${Date.now()}`).then(res => setUserTrades(res.data)).catch(console.error);
@@ -284,6 +309,10 @@ export default function Dashboard({ user, onLogout }) {
             console.error("Stats fetching error", err);
             setStatsLoading(false);
         });
+
+      axios.get(`/api/signals/stats?days=7&ts=${Date.now()}`)
+        .then(res => setWeeklyStats(res.data))
+        .catch(console.error);
   };
 
   const loadHistoryData = (status) => {
@@ -618,7 +647,7 @@ export default function Dashboard({ user, onLogout }) {
       <div className="mobile-top-header">
          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }} onClick={() => handleTabClick('markets')}>
             <img src="/logo.jpg" alt="Elyte Logo" style={{ width: '36px', height: '36px', borderRadius: '10px', border: '1px solid rgba(74, 222, 128, 0.3)' }} />
-            <h2 style={{ letterSpacing: 1, fontSize: '1.2rem', margin: 0, color: '#fff' }}>ELYTE</h2>
+            <h2 style={{ letterSpacing: 1, fontSize: '1.2rem', margin: 0, color: '#ffffff', textShadow: '0 0 10px rgba(255, 255, 255, 0.5), 0 0 20px rgba(255, 255, 255, 0.3)', fontWeight: '900' }}>ELYTE</h2>
          </div>
          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <button 
@@ -643,15 +672,23 @@ export default function Dashboard({ user, onLogout }) {
           onMouseOut={(e) => e.currentTarget.style.opacity = '1'}
         >
           <img src="/logo.jpg" alt="Elyte Logo" style={{ width: '48px', height: '48px', borderRadius: '14px', objectFit: 'cover', border: '1px solid rgba(74, 222, 128, 0.3)', boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }} />
-          <h2 style={{ letterSpacing: 1, fontSize: '1.4rem' }}>ELYTE</h2>
+          <h2 style={{ letterSpacing: 1, fontSize: '1.4rem', color: '#ffffff', textShadow: '0 0 12px rgba(255, 255, 255, 0.6), 0 0 24px rgba(255, 255, 255, 0.4)', fontWeight: '900' }}>ELYTE</h2>
         </div>
         
         <div style={{ padding: '1.5rem 0', flex: 1, display: 'flex', flexDirection: 'column' }}>
             <p style={{ color: '#666', fontSize: '0.75rem', marginBottom: '1rem', textTransform: 'uppercase', letterSpacing: '1px', paddingLeft: '24px' }}>ANA MENÜ</p>
             
+            <div className={`sidebar-nav-item ${activeTab === 'home' ? 'active' : ''}`} onClick={() => handleTabClick('home')}>
+               <Home size={20} />
+               <span>Ana Sayfa</span>
+            </div>
             <div className={`sidebar-nav-item ${activeTab === 'markets' ? 'active' : ''}`} onClick={() => handleTabClick('markets')}>
                <Activity size={20} />
-               <span>Taramalar</span>
+               <span>Sinyaller</span>
+            </div>
+            <div className={`sidebar-nav-item ${activeTab === 'portfolio' ? 'active' : ''}`} onClick={() => handleTabClick('portfolio')}>
+               <Briefcase size={20} />
+               <span>Varlık Yöneticisi</span>
             </div>
             <div className={`sidebar-nav-item ${activeTab === 'favorites' ? 'active' : ''}`} onClick={() => handleTabClick('favorites')}>
                <Star size={20} />
@@ -782,32 +819,246 @@ export default function Dashboard({ user, onLogout }) {
             </div>
         ) : (
           <>
-            {activeTab === 'markets' && (
+        {activeTab === 'home' && (
+            <div style={{ animation: 'fadeUp 0.4s ease-out' }}>
+                <div style={{ marginBottom: '24px' }}>
+                    <h1 style={{ fontSize: '2.5rem', fontWeight: '800', margin: 0, background: 'linear-gradient(90deg, #60a5fa, #c084fc)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                        Periskop Makro Pusula
+                    </h1>
+                    <p style={{ color: '#888', marginTop: '8px' }}>Yapay zeka tarama motorunu yöneten küresel piyasa yön sensörleri.</p>
+                </div>
+                
+                {macroData ? (
+                    <>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
+                        
+                        <div style={{ background: 'rgba(30, 41, 59, 0.5)', border: '1px solid rgba(255, 255, 255, 0.05)', borderRadius: '24px', padding: '24px', backdropFilter: 'blur(10px)', position: 'relative', overflow: 'hidden', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
+                            <div style={{ position: 'absolute', top: '-50px', right: '-50px', width: '150px', height: '150px', background: macroData.btcTrend?.includes('BULL') ? '#4ade80' : '#ef4444', filter: 'blur(80px)', opacity: 0.15 }}></div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+                                <div style={{ background: 'rgba(255,255,255,0.1)', padding: '8px', borderRadius: '12px' }}>
+                                    <Target size={24} color="#facc15" />
+                                </div>
+                                <h3 style={{ margin: 0, fontSize: '1.2rem', color: '#fff' }}>Bitcoin Dominansı</h3>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                                <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#fff' }}>
+                                    %{macroData.cgDom?.btc?.toFixed(2) || '0.00'}
+                                </div>
+                                <span style={{ color: macroData.btcTrend?.includes('BULL') ? '#4ade80' : '#ef4444', fontWeight: 'bold', fontSize: '0.9rem' }}>
+                                    BTC ({macroData.btcTrend === 'STRONG_BULL' ? 'GÜÇLÜ BOĞA' : (macroData.btcTrend === 'BULL' ? 'BOĞA' : (macroData.btcTrend === 'STRONG_BEAR' ? 'GÜÇLÜ AYI' : (macroData.btcTrend === 'BEAR' ? 'AYI' : 'NÖTR')))})
+                                </span>
+                            </div>
+                            <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px', marginTop: '12px', overflow: 'hidden' }}>
+                                <div style={{ width: `${Math.min(100, Math.max(0, (macroData.cgDom?.btc || 50)))}%`, height: '100%', background: 'linear-gradient(90deg, #facc15, #f59e0b)', borderRadius: '3px', transition: 'width 1s ease-in-out' }}></div>
+                            </div>
+                            <p style={{ color: '#888', fontSize: '0.85rem', marginTop: '12px' }}>Kripto piyasasındaki toplam paranın yüzde kaçının Bitcoin'de olduğunu gösterir.</p>
+                        </div>
+
+                        <div style={{ background: 'rgba(30, 41, 59, 0.5)', border: '1px solid rgba(255, 255, 255, 0.05)', borderRadius: '24px', padding: '24px', backdropFilter: 'blur(10px)', position: 'relative', overflow: 'hidden', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
+                            <div style={{ position: 'absolute', top: '-50px', right: '-50px', width: '150px', height: '150px', background: macroData.cgDom?.usdt > 5 ? '#ef4444' : '#4ade80', filter: 'blur(80px)', opacity: 0.15 }}></div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+                                <div style={{ background: 'rgba(255,255,255,0.1)', padding: '8px', borderRadius: '12px' }}>
+                                    <AlertTriangle size={24} color="#22d3ee" />
+                                </div>
+                                <h3 style={{ margin: 0, fontSize: '1.2rem', color: '#fff' }}>USDT Dominansı (Korku)</h3>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                                <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#fff' }}>
+                                    %{macroData.cgDom?.usdt?.toFixed(2) || '0.00'}
+                                </div>
+                                <span style={{ color: macroData.cgDom?.usdt > 5 ? '#ef4444' : '#4ade80', fontWeight: 'bold' }}>
+                                    {macroData.cgDom?.usdt > 5 ? '🛑 YÜKSEK RİSK' : '✅ GÜVENLİ LİKİDİTE'}
+                                </span>
+                            </div>
+                            <p style={{ color: '#888', fontSize: '0.85rem', marginTop: '8px' }}>Yatırımcıların nakitte bekleme oranıdır. Yükselmesi korkuyu, düşmesi piyasaya para girdiğini anlatır. %5 üzeri risklidir.</p>
+                        </div>
+
+                        <div style={{ background: 'rgba(30, 41, 59, 0.5)', border: '1px solid rgba(255, 255, 255, 0.05)', borderRadius: '24px', padding: '24px', backdropFilter: 'blur(10px)', position: 'relative', overflow: 'hidden', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
+                            <div style={{ position: 'absolute', top: '-50px', right: '-50px', width: '150px', height: '150px', background: '#c084fc', filter: 'blur(80px)', opacity: 0.15 }}></div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+                                <div style={{ background: 'rgba(255,255,255,0.1)', padding: '8px', borderRadius: '12px' }}>
+                                    <Rocket size={24} color="#c084fc" />
+                                </div>
+                                <h3 style={{ margin: 0, fontSize: '1.2rem', color: '#fff' }}>Altcoin Dominansı</h3>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                                <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#fff' }}>
+                                    %{macroData.cgDom?.alt?.toFixed(2) || '0.00'}
+                                </div>
+                                <span style={{ color: macroData.ethTrend?.includes('BULL') ? '#4ade80' : '#ef4444', fontWeight: 'bold', fontSize: '0.9rem' }}>
+                                    ETH ({macroData.ethTrend?.includes('BULL') ? 'BOĞA' : (macroData.ethTrend?.includes('BEAR') ? 'AYI' : 'NÖTR')})
+                                </span>
+                            </div>
+                            <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px', marginTop: '12px', overflow: 'hidden' }}>
+                                <div style={{ width: `${Math.min(100, Math.max(0, (macroData.cgDom?.alt || 10)*3))}%`, height: '100%', background: 'linear-gradient(90deg, #8b5cf6, #d946ef)', borderRadius: '3px', transition: 'width 1s ease-in-out' }}></div>
+                            </div>
+                            <p style={{ color: '#888', fontSize: '0.85rem', marginTop: '12px' }}>Altcoinlere akan hacim. Ethereum (ETH) Proxy'si ile birlikte teyit edilir.</p>
+                        </div>
+
+
+                        {/* --- YENİ EKLENEN: NASDAQ QUANT HEDGE FUND PANELİ --- */}
+                        {riskData && (
+                            <div style={{ background: 'rgba(30, 41, 59, 0.5)', border: '1px solid rgba(255, 255, 255, 0.05)', borderRadius: '24px', padding: '24px', backdropFilter: 'blur(10px)', position: 'relative', overflow: 'hidden', boxShadow: '0 8px 32px rgba(0,0,0,0.2)', gridColumn: '1 / -1' }}>
+                                <div style={{ position: 'absolute', top: '-50px', right: '-50px', width: '150px', height: '150px', background: riskData.appetite.includes('Off') ? '#ef4444' : '#10b981', filter: 'blur(80px)', opacity: 0.15 }}></div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+                                    <div style={{ background: 'rgba(255,255,255,0.1)', padding: '8px', borderRadius: '12px' }}>
+                                        <Briefcase size={24} color="#fff" />
+                                    </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                        <h3 style={{ margin: 0, fontSize: '1.2rem', color: '#fff' }}>Hedge Fund: Nasdaq Barometresi</h3>
+                                        <span style={{ color: riskData.appetite.includes('Off') ? '#ef4444' : '#10b981', fontWeight: 'bold' }}>{riskData.appetite}</span>
+                                    </div>
+                                </div>
+                                <p style={{ color: '#888', fontSize: '0.9rem', marginBottom: '16px' }}>ABD teknoloji devlerinin gelir büyümesi ile mevcut fiyatlanma rasyolarımının (Forward P/E) çarpıştırılması sonucu analiz edilmiştir.</p>
+                                
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '24px' }}>
+                                    {/* Table Header */}
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr 1.5fr 1fr 1fr', padding: '0 16px', color: '#64748b', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 'bold' }}>
+                                        <span>Sembol / F/K</span>
+                                        <span style={{ textAlign: 'center' }}>Performans (G / H / A)</span>
+                                        <span style={{ textAlign: 'center' }}>Kurumsal Akış</span>
+                                        <span style={{ textAlign: 'center' }}>Hacim</span>
+                                        <span style={{ textAlign: 'right' }}>Yapay Zeka Kararı</span>
+                                    </div>
+                                    
+                                    {riskData.stocks && riskData.stocks.map((stock, i) => (
+                                        <div 
+                                            key={i} 
+                                            onClick={() => setSelectedStock(stock)}
+                                            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.06)'}
+                                            onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'}
+                                            style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr 1.5fr 1fr 1fr', alignItems: 'center', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', padding: '16px', borderRadius: '16px', cursor: 'pointer', transition: 'all 0.2s', boxShadow: 'inset 0 0 20px rgba(0,0,0,0.1)' }}
+                                        >
+                                            {/* Column 1: Symbol & P/E */}
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                                <span style={{ color: '#fff', fontWeight: '800', fontSize: '1.1rem', letterSpacing: '0.5px' }}>{stock.symbol}</span>
+                                                <span style={{ color: '#888', fontSize: '0.8rem' }}>Forward F/K: <span style={{ color: '#aaa' }}>{stock.pe?.toFixed(1)}</span></span>
+                                            </div>
+
+                                            {/* Column 2: Returns */}
+                                            <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', fontSize: '0.85rem' }}>
+                                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'rgba(0,0,0,0.2)', padding: '6px 10px', borderRadius: '8px' }}>
+                                                    <span style={{ color: '#64748b', fontSize: '0.65rem', textTransform: 'uppercase', marginBottom: '2px' }}>Günlük</span>
+                                                    <span style={{ color: stock.daily >= 0 ? '#4ade80' : '#f87171', fontWeight: 'bold' }}>{stock.daily > 0 ? '+' : ''}{(stock.daily || 0).toFixed(1)}%</span>
+                                                </div>
+                                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'rgba(0,0,0,0.2)', padding: '6px 10px', borderRadius: '8px' }}>
+                                                    <span style={{ color: '#64748b', fontSize: '0.65rem', textTransform: 'uppercase', marginBottom: '2px' }}>Haftalık</span>
+                                                    <span style={{ color: stock.weekly >= 0 ? '#4ade80' : '#f87171', fontWeight: 'bold' }}>{stock.weekly > 0 ? '+' : ''}{(stock.weekly || 0).toFixed(1)}%</span>
+                                                </div>
+                                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'rgba(0,0,0,0.2)', padding: '6px 10px', borderRadius: '8px' }}>
+                                                    <span style={{ color: '#64748b', fontSize: '0.65rem', textTransform: 'uppercase', marginBottom: '2px' }}>Aylık</span>
+                                                    <span style={{ color: stock.monthly >= 0 ? '#4ade80' : '#f87171', fontWeight: 'bold' }}>{stock.monthly > 0 ? '+' : ''}{(stock.monthly || 0).toFixed(1)}%</span>
+                                                </div>
+                                            </div>
+
+                                            {/* Column 3: Institutional Flow */}
+                                            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                                                <div style={{ padding: '6px 14px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px', background: (stock.instFlow || '').includes('Alım') ? 'rgba(74, 222, 128, 0.1)' : ((stock.instFlow || '').includes('Satış') ? 'rgba(248, 113, 113, 0.1)' : 'rgba(255,255,255,0.05)'), color: (stock.instFlow || '').includes('Alım') ? '#4ade80' : ((stock.instFlow || '').includes('Satış') ? '#f87171' : '#aaa'), border: `1px solid ${(stock.instFlow || '').includes('Alım') ? 'rgba(74, 222, 128, 0.2)' : ((stock.instFlow || '').includes('Satış') ? 'rgba(248, 113, 113, 0.2)' : 'rgba(255,255,255,0.1)')}` }}>
+                                                    {(stock.instFlow || '').includes('Güçlü') && <Zap size={14} fill="currentColor" />}
+                                                    {stock.instFlow || '-'}
+                                                </div>
+                                            </div>
+
+                                            {/* Column 4: Volume Status */}
+                                            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(0,0,0,0.2)', padding: '6px 12px', borderRadius: '20px' }}>
+                                                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: (stock.volume || '').includes('Aşırı') ? '#eab308' : ((stock.volume || '').includes('Yüksek') ? '#4ade80' : '#94a3b8'), boxShadow: (stock.volume || '').includes('Yüksek') ? '0 0 10px currentColor' : 'none', animation: (stock.volume || '').includes('Aşırı') ? 'pulse 1.5s infinite' : 'none' }}></div>
+                                                    <span style={{ color: '#ccc', fontSize: '0.85rem', fontWeight: '500' }}>{stock.volume || '-'}</span>
+                                                </div>
+                                            </div>
+
+                                            {/* Column 5: Status Badge */}
+                                            <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+                                                <span style={{ color: stock.redFlag ? '#f87171' : '#4ade80', fontSize: '0.9rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px', textShadow: `0 0 10px ${stock.redFlag ? 'rgba(248, 113, 113, 0.4)' : 'rgba(74, 222, 128, 0.4)'}` }}>
+                                                    {stock.redFlag ? <AlertTriangle size={16} /> : <ThumbsUp size={16} />}
+                                                    {stock.redFlag ? 'Aşırı Fiyatlandı' : (stock.score > 1.2 ? 'Güçlü Büyüme' : 'Dengeli')}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', marginTop: '20px' }}>
+                        
+                        <div style={{ background: 'rgba(30, 41, 59, 0.5)', border: '1px solid rgba(255, 255, 255, 0.05)', borderRadius: '24px', padding: '24px', backdropFilter: 'blur(10px)', position: 'relative', overflow: 'hidden', boxShadow: '0 8px 32px rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                            <div style={{ position: 'absolute', top: '-50px', right: '-50px', width: '150px', height: '150px', background: '#3b82f6', filter: 'blur(80px)', opacity: 0.15 }}></div>
+                            <div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+                                    <div style={{ background: 'rgba(255,255,255,0.1)', padding: '8px', borderRadius: '12px' }}>
+                                        <Wallet size={24} color="#3b82f6" />
+                                    </div>
+                                    <h3 style={{ margin: 0, fontSize: '1.2rem', color: '#fff' }}>BingX Aktif Kasa</h3>
+                                </div>
+                                <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#fff', marginBottom: '8px' }}>
+                                    ${isAdmin && adminBalance !== null ? adminBalance.toFixed(2) : (stats ? (500 + stats.totalProfit).toFixed(2) : '500.00')}
+                                </div>
+                            </div>
+                            <span style={{ color: (isAdmin && adminBalance && adminBalance >= 500) || (!isAdmin && stats?.totalProfit >= 0) ? '#4ade80' : '#f87171', fontWeight: 'bold', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                {(isAdmin && adminBalance && adminBalance >= 500) || (!isAdmin && stats?.totalProfit >= 0) ? <TrendingUp size={16}/> : <TrendingDown size={16}/>} 
+                                {(isAdmin && adminBalance && adminBalance >= 500) || (!isAdmin && stats?.totalProfit >= 0) ? 'Net Kar Pozitif' : 'Net Kar Negatif'}
+                            </span>
+                        </div>
+
+                        <div style={{ background: 'rgba(30, 41, 59, 0.5)', border: '1px solid rgba(255, 255, 255, 0.05)', borderRadius: '24px', padding: '24px', backdropFilter: 'blur(10px)', position: 'relative', overflow: 'hidden', boxShadow: '0 8px 32px rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                            <div style={{ position: 'absolute', top: '-50px', right: '-50px', width: '150px', height: '150px', background: '#ec4899', filter: 'blur(80px)', opacity: 0.15 }}></div>
+                            <div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+                                    <div style={{ background: 'rgba(255,255,255,0.1)', padding: '8px', borderRadius: '12px' }}>
+                                        <Zap size={24} color="#ec4899" />
+                                    </div>
+                                    <h3 style={{ margin: 0, fontSize: '1.2rem', color: '#fff' }}>Algoritma Performansı <span style={{fontSize:'0.8rem', color:'#aaa'}}>(7 Günlük)</span></h3>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '8px' }}>
+                                    <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#fff' }}>
+                                        %{((weeklyStats || stats)?.winRate || 0).toFixed(1)}
+                                    </div>
+                                    <span style={{ color: '#aaa', fontSize: '0.9rem' }}>Kazanma Oranı (WR)</span>
+                                </div>
+                            </div>
+                            <div style={{ display: 'flex', gap: '16px' }}>
+                                <span style={{ color: '#888', fontSize: '0.85rem' }}><strong style={{color: '#fff'}}>{(weeklyStats || stats)?.totalSignals || 0}</strong> Sinyal</span>
+                                <span style={{ color: '#4ade80', fontSize: '0.85rem' }}><strong style={{color: '#4ade80'}}>{(weeklyStats || stats)?.wins || 0}</strong> Başarı</span>
+                                <span style={{ color: '#f87171', fontSize: '0.85rem' }}><strong style={{color: '#f87171'}}>{(weeklyStats || stats)?.losses || 0}</strong> Hata</span>
+                            </div>
+                        </div>
+                    </div>
+                    </>
+                ) : (
+                    <div style={{ padding: '40px', textAlign: 'center', color: '#888' }}>
+                         <RefreshCcw size={32} className="spinning" style={{ opacity: 0.5, marginBottom: '10px' }}/>
+                         <div>Makro veriler analiz ediliyor...</div>
+                    </div>
+                )}
+
+                {/* NASIL YORUMLANMALI AÇIKLAMA PANELİ */}
+                <div style={{ marginTop: '30px', background: 'rgba(59, 130, 246, 0.05)', border: '1px solid rgba(59, 130, 246, 0.2)', borderRadius: '24px', padding: '24px' }}>
+                     <h3 style={{ margin: '0 0 16px 0', fontSize: '1.25rem', color: '#60a5fa', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                         <Map size={24} /> Makro Pusula Nasıl Yorumlanır?
+                     </h3>
+                     <div style={{display: 'flex', flexDirection: 'column', gap: '16px'}}>
+                         <div style={{ background: 'rgba(0,0,0,0.2)', padding: '16px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.02)'}}>
+                             <strong style={{color: '#facc15', fontSize: '1.05rem', display: 'block', marginBottom: '6px'}}>1. Bitcoin Dominansı & Ana Yönü</strong>
+                             <span style={{ color: '#ccc', fontSize: '0.95rem', lineHeight: '1.6' }}>Piyasadaki total paranın Bitcoin'deki ağırlığını gösterir. Dominansın artması piyasanın Bitcoin'e güvendiğini anlatır. Ayrıca yanındaki yön belirteci <span style={{ color: '#4ade80', fontWeight: 'bold' }}>BOĞA</span> ise robot fiyatların yükseleceğini öngörerek Long (Alım) işlemlere ağırlık verir; <span style={{ color: '#ef4444', fontWeight: 'bold' }}>AYI</span> ise düşüş tehlikesi sebebiyle sistemi korumaya alır.</span>
+                         </div>
+                         <div style={{ background: 'rgba(0,0,0,0.2)', padding: '16px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.02)'}}>
+                             <strong style={{color: '#22d3ee', fontSize: '1.05rem', display: 'block', marginBottom: '6px'}}>2. USDT (Tether) Dominansı</strong>
+                             <span style={{ color: '#ccc', fontSize: '0.95rem', lineHeight: '1.6' }}>Yatırımcıların mevcut varlıklarını Dolarda (nakitte) tutma oranını gösterir. Bu oran %5'in üzerine çıktığında piyasada <span style={{ color: '#ef4444', fontWeight: 'bold' }}>KORKU</span> hakim demektir ve nakite kaçış hızlanmıştır. Oran düştükçe, sisteme taze para pompalanıyor demektir.</span>
+                         </div>
+                         <div style={{ background: 'rgba(0,0,0,0.2)', padding: '16px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.02)'}}>
+                             <strong style={{color: '#c084fc', fontSize: '1.05rem', display: 'block', marginBottom: '6px'}}>3. Altcoin Dominansı & ETH Yönü</strong>
+                             <span style={{ color: '#ccc', fontSize: '0.95rem', lineHeight: '1.6' }}>Bitcoin dışındaki altcoin (Ethereum vb.) projelerine akan paranın yüzdesini gösterir. Ethereum (ETH) yönünün Boğa olması ve dominansın artması, Alt Sezon adı verilen harika yükseliş fırsatlarının kapıda olduğunu işaret eder.</span>
+                         </div>
+                     </div>
+                </div>
+            </div>
+        )}
+
+        {activeTab === 'markets' && (
           <>
-             {macroData && macroData.btc && macroData.dxy && (
-             <div style={{ 
-                 display: 'flex', gap: '16px', marginBottom: '24px', 
-                 background: 'rgba(255, 255, 255, 0.03)', 
-                 border: '1px solid rgba(255, 255, 255, 0.05)', 
-                 borderRadius: '16px', padding: '16px', flexWrap: 'wrap',
-                 backdropFilter: 'blur(10px)'
-             }}>
-                 <div style={{ flex: '1 1 200px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                     <span style={{ fontSize: '0.8rem', color: '#888', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>Makro Pusula</span>
-                     <h3 style={{ fontSize: '1.2rem', color: '#fff', margin: 0 }}>Piyasa Yönü</h3>
-                 </div>
-                 <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                     <div style={{ background: macroData.btc.type === 'BULL' ? 'rgba(74, 222, 128, 0.1)' : 'rgba(248, 113, 113, 0.1)', border: `1px solid ${macroData.btc.type === 'BULL' ? 'rgba(74,222,128,0.3)' : 'rgba(248,113,113,0.3)'}`, borderRadius: '12px', padding: '10px 16px', display: 'flex', flexDirection: 'column' }}>
-                         <span style={{ fontSize: '0.75rem', color: macroData.btc.type === 'BULL' ? '#4ade80' : '#f87171' }}>👑 BRAND TREND (BTC)</span>
-                         <span style={{ fontSize: '1rem', fontWeight: 'bold', color: '#fff' }}>{macroData.btc.trend} <span style={{ fontSize: '0.8rem', opacity: 0.7, color: '#aaa' }}>({macroData.btc.smc})</span></span>
-                     </div>
-                     <div style={{ background: macroData.dxy.type === 'BEAR' ? 'rgba(74, 222, 128, 0.1)' : 'rgba(248, 113, 113, 0.1)', border: `1px solid ${macroData.dxy.type === 'BEAR' ? 'rgba(74,222,128,0.3)' : 'rgba(248,113,113,0.3)'}`, borderRadius: '12px', padding: '10px 16px', display: 'flex', flexDirection: 'column' }}>
-                         <span style={{ fontSize: '0.75rem', color: macroData.dxy.type === 'BEAR' ? '#4ade80' : '#f87171' }}>💵 DOLAR GÜCÜ (DXY)</span>
-                         <span style={{ fontSize: '1rem', fontWeight: 'bold', color: '#fff' }}>{macroData.dxy.trend} <span style={{ fontSize: '0.8rem', opacity: 0.7, color: '#aaa' }}>({macroData.dxy.smc})</span></span>
-                     </div>
-                 </div>
-             </div>
-             )}
              <div style={{ marginBottom: '1rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '8px' }}>
                     <div style={{display: 'flex', alignItems: 'center', gap: '15px'}}>
@@ -833,22 +1084,33 @@ export default function Dashboard({ user, onLogout }) {
                 </div>
                 <p style={{ color: '#888', fontSize: '1rem', marginBottom: '16px' }}>Periskop yapay zeka analiz motorunun anlık tespitleri.</p>
 
-                <div className="stats-scroll-container" style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '8px', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                <div className="stats-scroll-container" style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '12px', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                    <style>{`.stats-scroll-container::-webkit-scrollbar { display: none; }`}</style>
-                   <div style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.02))', backdropFilter: 'blur(10px)', padding: '8px 16px', borderRadius: '12px', fontSize: '0.85rem', whiteSpace: 'nowrap', border: '1px solid rgba(255,255,255,0.25)', boxShadow: '0 0 12px rgba(255,255,255,0.15), inset 0 0 10px rgba(255,255,255,0.05)' }}>
-                       <span style={{ color: '#888', fontWeight: '500' }}>Aktif:</span> <span style={{ color: '#fff', fontWeight: '800', fontSize: '0.95rem', marginLeft: '6px' }}>{activeMainSignals.length}</span>
+                   
+                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(30, 41, 59, 0.6)', backdropFilter: 'blur(10px)', padding: '8px 16px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)', whiteSpace: 'nowrap' }}>
+                       <Activity size={16} color="#888" />
+                       <span style={{ color: '#888', fontWeight: '500', fontSize: '0.85rem' }}>Aktif:</span> 
+                       <span style={{ color: '#fff', fontWeight: '800', fontSize: '0.95rem' }}>{activeMainSignals.length}</span>
                    </div>
-                   <div style={{ background: 'linear-gradient(135deg, rgba(74, 222, 128, 0.1), rgba(74, 222, 128, 0.02))', backdropFilter: 'blur(10px)', padding: '8px 16px', borderRadius: '12px', fontSize: '0.85rem', whiteSpace: 'nowrap', border: '1px solid rgba(255,255,255,0.25)', boxShadow: '0 0 12px rgba(255,255,255,0.15), inset 0 0 10px rgba(255,255,255,0.05)' }}>
-                       <span style={{ color: '#4ade80', fontWeight: '800', fontSize: '0.95rem' }}>{mainLongs} LONG</span>
+                   
+                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(16, 185, 129, 0.05)', backdropFilter: 'blur(10px)', padding: '8px 16px', borderRadius: '20px', border: '1px solid rgba(16, 185, 129, 0.2)', whiteSpace: 'nowrap' }}>
+                       <TrendingUp size={16} color="#10b981" />
+                       <span style={{ color: '#fff', fontWeight: '700', fontSize: '0.9rem' }}>{mainLongs} LONG</span>
                    </div>
-                   <div style={{ background: 'linear-gradient(135deg, rgba(248, 113, 113, 0.1), rgba(248, 113, 113, 0.02))', backdropFilter: 'blur(10px)', padding: '8px 16px', borderRadius: '12px', fontSize: '0.85rem', whiteSpace: 'nowrap', border: '1px solid rgba(255,255,255,0.25)', boxShadow: '0 0 12px rgba(255,255,255,0.15), inset 0 0 10px rgba(255,255,255,0.05)' }}>
-                       <span style={{ color: '#f87171', fontWeight: '800', fontSize: '0.95rem' }}>{mainShorts} SHORT</span>
+
+                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(239, 68, 68, 0.05)', backdropFilter: 'blur(10px)', padding: '8px 16px', borderRadius: '20px', border: '1px solid rgba(239, 68, 68, 0.2)', whiteSpace: 'nowrap' }}>
+                       <TrendingDown size={16} color="#ef4444" />
+                       <span style={{ color: '#fff', fontWeight: '700', fontSize: '0.9rem' }}>{mainShorts} SHORT</span>
                    </div>
-                   <div style={{ background: 'linear-gradient(135deg, rgba(74, 222, 128, 0.05), rgba(74, 222, 128, 0.01))', backdropFilter: 'blur(10px)', padding: '8px 16px', borderRadius: '12px', fontSize: '0.85rem', whiteSpace: 'nowrap', border: '1px solid rgba(255,255,255,0.25)', boxShadow: '0 0 12px rgba(255,255,255,0.15), inset 0 0 10px rgba(255,255,255,0.05)' }}>
-                       <span style={{ color: '#4ade80', fontWeight: '700', fontSize: '0.9rem' }}>{mainProfitCount} Kâr</span>
+
+                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(74, 222, 128, 0.05)', backdropFilter: 'blur(10px)', padding: '8px 16px', borderRadius: '20px', border: '1px solid rgba(74, 222, 128, 0.1)', whiteSpace: 'nowrap' }}>
+                       <Target size={16} color="#4ade80" />
+                       <span style={{ color: '#fff', fontWeight: '700', fontSize: '0.9rem' }}>{mainProfitCount} Kâr</span>
                    </div>
-                   <div style={{ background: 'linear-gradient(135deg, rgba(248, 113, 113, 0.05), rgba(248, 113, 113, 0.01))', backdropFilter: 'blur(10px)', padding: '8px 16px', borderRadius: '12px', fontSize: '0.85rem', whiteSpace: 'nowrap', border: '1px solid rgba(255,255,255,0.25)', boxShadow: '0 0 12px rgba(255,255,255,0.15), inset 0 0 10px rgba(255,255,255,0.05)' }}>
-                       <span style={{ color: '#f87171', fontWeight: '700', fontSize: '0.9rem' }}>{mainLossCount} Zarar</span>
+
+                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(248, 113, 113, 0.05)', backdropFilter: 'blur(10px)', padding: '8px 16px', borderRadius: '20px', border: '1px solid rgba(248, 113, 113, 0.1)', whiteSpace: 'nowrap' }}>
+                       <AlertTriangle size={16} color="#f87171" />
+                       <span style={{ color: '#fff', fontWeight: '700', fontSize: '0.9rem' }}>{mainLossCount} Zarar</span>
                    </div>
                 </div>
              </div>
@@ -1091,6 +1353,10 @@ export default function Dashboard({ user, onLogout }) {
               )}
           </div>
         )}
+
+        {activeTab === 'portfolio' && (
+            <PortfolioManager />
+        )}
         </>
         )}
       </div>
@@ -1244,9 +1510,17 @@ export default function Dashboard({ user, onLogout }) {
 
       {/* MOBILE BOTTOM NAV */}
       <div className="mobile-bottom-nav">
+         <div className={`bottom-nav-item ${activeTab === 'home' ? 'active' : ''}`} onClick={() => handleTabClick('home')}>
+             <Home size={24} color={activeTab === 'home' ? '#ec4899' : '#888'} />
+             <span style={{ color: activeTab === 'home' ? '#ec4899' : '#888' }}>Ana Sayfa</span>
+         </div>
+         <div className={`bottom-nav-item ${activeTab === 'portfolio' ? 'active' : ''}`} onClick={() => handleTabClick('portfolio')}>
+             <Briefcase size={24} color={activeTab === 'portfolio' ? '#8b5cf6' : '#888'} />
+             <span style={{ color: activeTab === 'portfolio' ? '#8b5cf6' : '#888' }}>Varlıklar</span>
+         </div>
          <div className={`bottom-nav-item ${activeTab === 'markets' ? 'active' : ''}`} onClick={() => handleTabClick('markets')}>
              <Activity size={24} color={activeTab === 'markets' ? '#4ade80' : '#888'} />
-             <span style={{ color: activeTab === 'markets' ? '#4ade80' : '#888' }}>Taramalar</span>
+             <span style={{ color: activeTab === 'markets' ? '#4ade80' : '#888' }}>Sinyaller</span>
          </div>
          <div className={`bottom-nav-item ${activeTab === 'favorites' ? 'active' : ''}`} onClick={() => handleTabClick('favorites')}>
              <Star size={24} color={activeTab === 'favorites' ? '#eab308' : '#888'} />
@@ -1279,6 +1553,91 @@ export default function Dashboard({ user, onLogout }) {
                      Daha Sonra Belki
                  </button>
              </div>
+          </div>
+      )}
+      {selectedStock && (
+          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+              <div style={{ background: '#1e293b', border: `1px solid ${selectedStock.redFlag ? '#ef4444' : '#10b981'}`, borderRadius: '24px', padding: '24px', width: '100%', maxWidth: '750px', maxHeight: '90vh', overflowY: 'auto', position: 'relative' }}>
+                  <button onClick={() => setSelectedStock(null)} style={{ position: 'absolute', top: '16px', right: '16px', background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#fff', zIndex: 10, transition: '0.2s', ':hover': { background: 'rgba(255,255,255,0.2)' } }}>
+                      <X size={20} />
+                  </button>
+                  <div style={{ position: 'absolute', top: '-50px', right: '-50px', width: '120px', height: '120px', background: selectedStock.redFlag ? '#ef4444' : '#10b981', filter: 'blur(70px)', opacity: 0.2 }}></div>
+                  <h2 style={{ margin: '0 0 5px 0', color: '#fff', fontSize: '1.8rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      {selectedStock.symbol}
+                      <span style={{ fontSize: '1.2rem', color: '#cbd5e1' }}>${selectedStock.price?.toFixed(2)}</span>
+                  </h2>
+                  <div style={{ color: selectedStock.redFlag ? '#ef4444' : '#10b981', fontWeight: 'bold', marginBottom: '20px', fontSize: '1rem' }}>
+                      {selectedStock.status}
+                  </div>
+                  
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
+                      <div style={{ background: 'rgba(0,0,0,0.2)', padding: '10px 14px', borderRadius: '12px' }}>
+                          <div style={{ color: '#888', fontSize: '0.8rem' }}>İleri F/K</div>
+                          <span style={{ color: '#fff', fontWeight: 'bold' }}>{selectedStock.pe?.toFixed(2) || 'N/A'}</span>
+                      </div>
+                      <div style={{ background: 'rgba(0,0,0,0.2)', padding: '10px 14px', borderRadius: '12px' }}>
+                          <div style={{ color: '#888', fontSize: '0.8rem' }}>Mevcut F/K</div>
+                          <span style={{ color: '#fff', fontWeight: 'bold' }}>{selectedStock.trailingPE?.toFixed(2) || 'N/A'}</span>
+                      </div>
+                      <div style={{ background: 'rgba(0,0,0,0.2)', padding: '10px 14px', borderRadius: '12px' }}>
+                          <div style={{ color: '#888', fontSize: '0.8rem' }}>PEG Rasyosu</div>
+                          <span style={{ color: '#fff', fontWeight: 'bold' }}>{selectedStock.pegRatio?.toFixed(2) || 'N/A'}</span>
+                      </div>
+                      <div style={{ background: 'rgba(0,0,0,0.2)', padding: '10px 14px', borderRadius: '12px' }}>
+                          <div style={{ color: '#888', fontSize: '0.8rem' }}>Kâr Büyümesi</div>
+                          <span style={{ color: selectedStock.epsGrowth > 0 ? '#4ade80' : '#ef4444', fontWeight: 'bold' }}>%{(selectedStock.epsGrowth || 0).toFixed(1)}</span>
+                      </div>
+                      <div style={{ background: 'rgba(0,0,0,0.2)', padding: '10px 14px', borderRadius: '12px' }}>
+                          <div style={{ color: '#888', fontSize: '0.8rem' }}>Özkaynak Borç Oranı</div>
+                          <span style={{ color: selectedStock.debtToEquity > 100 ? '#ef4444' : '#4ade80', fontWeight: 'bold' }}>%{(selectedStock.debtToEquity || 0).toFixed(1)}</span>
+                      </div>
+                      <div style={{ background: 'rgba(0,0,0,0.2)', padding: '10px 14px', borderRadius: '12px' }}>
+                          <div style={{ color: '#888', fontSize: '0.8rem' }}>Toplam Borç</div>
+                          <span style={{ color: '#fff', fontWeight: 'bold' }}>${((selectedStock.totalDebt || 0) / 1e9).toFixed(1)}B</span>
+                      </div>
+                  </div>
+
+                  {selectedStock.earningsHistory && selectedStock.earningsHistory.length > 0 && (
+                      <div style={{ marginBottom: '20px' }}>
+                          <h4 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#cbd5e1', marginBottom: '8px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '4px' }}>
+                              <span>EPS Geçmişi (Son 4 Çeyrek)</span>
+                              <span style={{ fontSize: '0.85rem', color: selectedStock.epsGrowth > 0 ? '#4ade80' : '#ef4444' }}>Yıllık Büyüme (YoY): %{(selectedStock.epsGrowth || 0).toFixed(1)}</span>
+                          </h4>
+                          {selectedStock.earningsHistory.map((q, idx) => (
+                              <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                                  <span style={{ color: '#888', width: '60px' }}>{q.date}</span>
+                                  <span style={{ color: '#888', fontSize: '0.85rem', flex: 1, textAlign: 'center' }}>Beklenti: {q.epsEstimate?.toFixed(2) || '-'}</span>
+                                  <span style={{ color: q.epsActual >= q.epsEstimate ? '#4ade80' : '#ef4444', fontWeight: 'bold', width: '80px', textAlign: 'right' }}>Gelen: {q.epsActual?.toFixed(2) || '-'}</span>
+                                  <span style={{ color: q.qoq > 0 ? '#4ade80' : (q.qoq < 0 ? '#ef4444' : '#888'), fontWeight: 'bold', width: '80px', textAlign: 'right', fontSize: '0.85rem' }}>
+                                      {q.qoq !== null ? (q.qoq > 0 ? '+' : '') + q.qoq.toFixed(1) + '%' : 'N/A'}
+                                  </span>
+                              </div>
+                          ))}
+                      </div>
+                  )}
+
+                  <div style={{ padding: '16px', background: 'rgba(59, 130, 246, 0.05)', borderRadius: '16px', borderLeft: `4px solid #3b82f6`, marginBottom: '16px' }}>
+                      <h4 style={{ margin: '0 0 8px 0', color: '#60a5fa', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <Zap size={16} /> AI Nitel Analiz Raporu
+                      </h4>
+                      <div style={{ margin: 0, fontSize: '0.9rem' }}>
+                          {renderMarkdown(selectedStock.aiReport)}
+                      </div>
+                  </div>
+
+                  <div style={{ padding: '12px', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', borderLeft: `4px solid ${selectedStock.redFlag ? '#ef4444' : '#10b981'}` }}>
+                      <p style={{ margin: 0, color: '#cbd5e1', fontSize: '0.85rem', lineHeight: '1.5' }}>
+                          {selectedStock.flagReason || (selectedStock.score > 1.2 ? "Şirketin büyüme hızı, fiyatından daha avantajlı konumda. Algoritmamız bunu FIRSAT olarak etiketliyor." : "Şirketin kâr büyümesi ve fiyatlanması standart normlar içinde. Yüksek getiri için yeterli uçurum bulunmuyor.")}
+                      </p>
+                  </div>
+
+                  <button 
+                      onClick={() => setSelectedStock(null)}
+                      style={{ marginTop: '24px', width: '100%', padding: '14px', background: 'rgba(255,255,255,0.05)', color: '#fff', border: 'none', borderRadius: '12px', fontWeight: 'bold', fontSize: '1rem', cursor: 'pointer', border: '1px solid rgba(255,255,255,0.1)' }}
+                  >
+                      Kapat
+                  </button>
+              </div>
           </div>
       )}
 

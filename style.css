@@ -464,6 +464,10 @@ footer {
   border: 1px solid rgba(74, 222, 128, 0.2);
 }
 
+.sidebar-nav-item.active span {
+  color: #ffffff;
+}
+
 /* Middle Panel - Signals */
 .signals-panel {
   flex: 1.6;
