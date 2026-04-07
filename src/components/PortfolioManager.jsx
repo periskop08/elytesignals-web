@@ -2,6 +2,24 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Briefcase, TrendingUp, TrendingDown, Newspaper, ShieldCheck, Zap, AlertTriangle, RefreshCcw, BellRing, X } from 'lucide-react';
 
+const renderMarkdown = (text) => {
+    if (!text) return "AI analiz raporu bekleniyor...";
+    return text.split('\n').map((line, i) => {
+        let formattedLine = line.replace(/\*\*(.*?)\*\*/g, '<strong style="color: #fff">$1</strong>');
+        if (line.startsWith('### ')) {
+            return <h3 key={i} style={{ color: '#60a5fa', margin: '16px 0 8px 0', fontSize: '1.1rem' }} dangerouslySetInnerHTML={{ __html: formattedLine.replace('### ', '') }} />;
+        } else if (line.trim().startsWith('- ')) {
+            return <li key={i} style={{ marginLeft: '16px', marginBottom: '6px', lineHeight: '1.6', color: '#cbd5e1' }} dangerouslySetInnerHTML={{ __html: formattedLine.replace('- ', '') }} />;
+        } else if (line.match(/^\d+\)/)) {
+            return <h4 key={i} style={{ color: '#94a3b8', margin: '14px 0 6px 0', fontSize: '1.05rem', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '4px' }} dangerouslySetInnerHTML={{ __html: formattedLine }} />;
+        } else if (line.trim() === '') {
+            return <br key={i} />;
+        } else {
+            return <div key={i} style={{ margin: '6px 0', lineHeight: '1.6', color: '#cbd5e1' }} dangerouslySetInnerHTML={{ __html: formattedLine }} />;
+        }
+    });
+};
+
 export default function PortfolioManager() {
     const [assets, setAssets] = useState([]);
     const [sentiments, setSentiments] = useState([]);
@@ -68,8 +86,21 @@ export default function PortfolioManager() {
         );
     }
 
-    const totalPortfolioValue = 12400.50; // Mock total value
-    const totalPnl = 28.4; // Mock PNL
+    const baseCapital = 1000.00; // Kullanıcının istediği 1000$ ufak kasa simülasyonu
+    let totalPnlValue = 0;
+    
+    if (assets && assets.length > 0) {
+        assets.forEach(a => {
+            if (a.allocatedPercentage > 0) {
+                const allocatedDollars = baseCapital * (a.allocatedPercentage / 100);
+                const assetProfit = allocatedDollars * ((a.drawdown || 0) / 100);
+                totalPnlValue += assetProfit;
+            }
+        });
+    }
+
+    const totalPortfolioValue = baseCapital + totalPnlValue;
+    const totalPnl = baseCapital > 0 ? parseFloat(((totalPnlValue / baseCapital) * 100).toFixed(2)) : 0;
 
     return (
         <div style={{ padding: '20px', animation: 'fadeUp 0.4s ease-out', width: '100%' }}>
@@ -101,15 +132,15 @@ export default function PortfolioManager() {
                         <div style={{ background: 'rgba(255,255,255,0.1)', padding: '10px', borderRadius: '12px' }}>
                             <Briefcase size={28} color="#ec4899" />
                         </div>
-                        <h3 style={{ margin: 0, fontSize: '1.2rem', color: '#fff' }}>Toplam Portföy (Örnek Demo)</h3>
+                        <h3 style={{ margin: 0, fontSize: '1.2rem', color: '#fff' }}>Toplam Portföy (1000$ Kasa)</h3>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px' }}>
                         <div style={{ fontSize: '3rem', fontWeight: 'bold', color: '#fff' }}>
-                            ${totalPortfolioValue.toLocaleString()}
+                            ${totalPortfolioValue.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                         </div>
                         <span style={{ color: totalPnl > 0 ? '#4ade80' : '#f87171', fontWeight: 'bold', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            {totalPnl > 0 ? <TrendingUp size={18}/> : <TrendingDown size={18}/>}
-                            %{totalPnl}
+                            {totalPnl >= 0 ? <TrendingUp size={18}/> : <TrendingDown size={18}/>}
+                            %{Math.abs(totalPnl)}
                         </span>
                     </div>
 
@@ -179,62 +210,85 @@ export default function PortfolioManager() {
                 Premium Borsa Varlıkları (Watchlist)
             </h2>
             
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {/* Table Header */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1.5fr 1.5fr 1.5fr', padding: '0 16px', color: '#64748b', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 'bold' }}>
+                    <span>Varlık</span>
+                    <span style={{ textAlign: 'center' }}>Portföy Ağırlığı</span>
+                    <span style={{ textAlign: 'center' }}>AI Mikro Skorlar</span>
+                    <span style={{ textAlign: 'center' }}>Pozisyon Özeti</span>
+                    <span style={{ textAlign: 'right' }}>Durum & Karar</span>
+                </div>
+
                 {assets.length === 0 ? (
-                    <div style={{ color: '#888' }}>Varlık bulunamadı. Lütfen sisteme varlık ekleyin veya AI taramasını bekleyin.</div>
+                    <div style={{ color: '#888', padding: '16px', textAlign: 'center', background: 'rgba(255,255,255,0.02)', borderRadius: '16px' }}>Varlık bulunamadı. Lütfen sisteme varlık ekleyin veya AI taramasını bekleyin.</div>
                 ) : assets.filter(a => a.allocatedPercentage > 0).map(asset => (
                     <div key={asset.id} 
                          onClick={() => setSelectedAsset(asset)}
-                         onMouseOver={e => e.currentTarget.style.transform = 'translateY(-5px) scale(1.01)'} 
-                         onMouseOut={e => e.currentTarget.style.transform = 'translateY(0) scale(1)'}
-                         style={{ background: 'rgba(30, 41, 59, 0.4)', border: asset.type === 'ETF' ? '1px solid rgba(56, 189, 248, 0.4)' : '1px solid rgba(255, 255, 255, 0.05)', borderRadius: '20px', padding: '24px', transition: 'all 0.3s ease', position: 'relative', cursor: 'pointer' }}>
+                         onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.06)'}
+                         onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'}
+                         style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1.5fr 1.5fr 1.5fr', alignItems: 'center', background: 'rgba(255,255,255,0.02)', border: asset.type === 'ETF' ? '1px solid rgba(56, 189, 248, 0.2)' : '1px solid rgba(255,255,255,0.05)', padding: '16px', borderRadius: '16px', cursor: 'pointer', transition: 'all 0.2s', boxShadow: 'inset 0 0 20px rgba(0,0,0,0.1)', position: 'relative' }}
+                    >
                         {asset.insiderScore >= 80 && (
-                            <div style={{ position: 'absolute', top: '-12px', right: '-12px', background: 'linear-gradient(90deg, #ef4444, #f97316)', padding: '6px 12px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 'bold', color: '#fff', display: 'flex', alignItems: 'center', gap: '4px', boxShadow: '0 4px 10px rgba(239, 68, 68, 0.5)', zIndex: 10 }}>
-                                <BellRing size={14} /> INSIDER ALERT
+                            <div style={{ position: 'absolute', top: '-10px', left: '-10px', background: 'linear-gradient(90deg, #ef4444, #f97316)', padding: '4px 10px', borderRadius: '12px', fontSize: '0.65rem', fontWeight: 'bold', color: '#fff', display: 'flex', alignItems: 'center', gap: '4px', boxShadow: '0 4px 10px rgba(239, 68, 68, 0.5)', zIndex: 10 }}>
+                                <BellRing size={12} /> INSIDER
                             </div>
                         )}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
-                            <div>
-                                <h3 style={{ margin: 0, fontSize: '1.5rem', color: '#fff', fontWeight: 'bold' }}>{asset.symbol}</h3>
-                                <span style={{ color: asset.type === 'ETF' ? '#0ea5e9' : '#888', fontSize: '0.8rem', background: asset.type === 'ETF' ? 'rgba(14, 165, 233, 0.15)' : 'rgba(255,255,255,0.1)', padding: '2px 8px', borderRadius: '12px', marginTop: '4px', display: 'inline-block' }}>{asset.type}</span>
-                            </div>
-                            <div style={{ textAlign: 'right' }}>
-                                <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#fff' }}>%{asset.allocatedPercentage}</div>
-                                <span style={{ color: '#888', fontSize: '0.85rem' }}>Portföy Ağırlığı</span>
+
+                        {/* Column 1: Symbol & Type */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <span style={{ color: '#fff', fontWeight: '800', fontSize: '1.2rem', letterSpacing: '0.5px' }}>{asset.symbol}</span>
+                            <span style={{ alignSelf: 'flex-start', color: asset.type === 'ETF' ? '#0ea5e9' : '#888', background: asset.type === 'ETF' ? 'rgba(14, 165, 233, 0.15)' : 'rgba(255,255,255,0.1)', padding: '2px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: '600' }}>{asset.type}</span>
+                        </div>
+
+                        {/* Column 2: Allocation Percentage */}
+                        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <div style={{ fontSize: '1.4rem', fontWeight: 'bold', color: '#fff' }}>%{asset.allocatedPercentage}</div>
                             </div>
                         </div>
 
-                        {/* Mikro Skorlar Gridi */}
-                        {asset.ceoScore > 0 && (
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '16px', background: 'rgba(0,0,0,0.2)', padding: '10px', borderRadius: '12px' }}>
-                            <div style={{ fontSize: '0.8rem', color: '#cbd5e1' }}>CEO Puanı: <strong style={{color: '#fff'}}>{asset.ceoScore}</strong></div>
-                            <div style={{ fontSize: '0.8rem', color: '#cbd5e1' }}>Tech Edge: <strong style={{color: '#fff'}}>{asset.edgeScore}</strong></div>
-                            <div style={{ fontSize: '0.8rem', color: '#cbd5e1' }}>Patent: <strong style={{color: '#fff'}}>{asset.patentScore}</strong></div>
-                            <div style={{ fontSize: '0.8rem', color: '#cbd5e1' }}>Insider: <strong style={{color: (asset.insiderScore >= 80 ? '#f87171' : '#fff')}}>{asset.insiderScore}</strong></div>
+                        {/* Column 3: Micro Scores (CEO, Edge, Patent) */}
+                        <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', fontSize: '0.85rem' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'rgba(0,0,0,0.2)', padding: '6px 12px', borderRadius: '8px', borderBottom: '2px solid rgba(255,255,255,0.1)' }}>
+                                <span style={{ color: '#64748b', fontSize: '0.6rem', textTransform: 'uppercase', marginBottom: '2px' }}>CEO</span>
+                                <span style={{ color: '#fff', fontWeight: 'bold' }}>{asset.ceoScore || 0}</span>
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'rgba(0,0,0,0.2)', padding: '6px 12px', borderRadius: '8px', borderBottom: '2px solid rgba(255,255,255,0.1)' }}>
+                                <span style={{ color: '#64748b', fontSize: '0.6rem', textTransform: 'uppercase', marginBottom: '2px' }}>Tech</span>
+                                <span style={{ color: '#fff', fontWeight: 'bold' }}>{asset.edgeScore || 0}</span>
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'rgba(0,0,0,0.2)', padding: '6px 12px', borderRadius: '8px', borderBottom: '2px solid rgba(255,255,255,0.1)' }}>
+                                <span style={{ color: '#64748b', fontSize: '0.6rem', textTransform: 'uppercase', marginBottom: '2px' }}>Patent</span>
+                                <span style={{ color: '#fff', fontWeight: 'bold' }}>{asset.patentScore || 0}</span>
+                            </div>
                         </div>
-                        )}
 
-                        <div style={{ background: 'rgba(0,0,0,0.3)', borderRadius: '12px', padding: '12px', marginBottom: '16px' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                                <span style={{ color: '#aaa', fontSize: '0.9rem' }}>Ortalama Maliyet</span>
-                                <span style={{ color: '#fff', fontWeight: 'bold' }}>${asset.averageCost.toFixed(2)}</span>
+                        {/* Column 4: Cost & Lot */}
+                        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', background: 'rgba(0,0,0,0.2)', padding: '8px 16px', borderRadius: '20px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px' }}>
+                                    <span style={{ color: '#aaa', fontSize: '0.8rem' }}>Maliyet:</span>
+                                    <span style={{ color: '#fff', fontWeight: 'bold', fontSize: '0.85rem' }}>${asset.averageCost.toFixed(2)}</span>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px' }}>
+                                    <span style={{ color: '#aaa', fontSize: '0.8rem' }}>Adet (Lot):</span>
+                                    <span style={{ color: '#fff', fontWeight: 'bold', fontSize: '0.85rem' }}>{asset.quantity}</span>
+                                </div>
                             </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                                <span style={{ color: '#aaa', fontSize: '0.9rem' }}>Adet (Lot)</span>
-                                <span style={{ color: '#fff', fontWeight: 'bold' }}>{asset.quantity}</span>
-                            </div>
-                            {asset.drawdown > 0 && (
-                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                <span style={{ color: '#aaa', fontSize: '0.9rem' }}>Aktif Zarar (DD)</span>
-                                <span style={{ color: asset.drawdown >= 15 ? '#ef4444' : '#facc15', fontWeight: 'bold' }}>-%{asset.drawdown.toFixed(1)}</span>
-                            </div>
-                            )}
                         </div>
-                        
-                        <div style={{ width: '100%', height: '8px', background: 'rgba(255,255,255,0.1)', borderRadius: '4px', overflow: 'hidden', position: 'relative' }}>
-                            <div style={{ width: `${Math.min(100, Math.max(0, asset.aiScore))}%`, height: '100%', background: asset.aiScore > 85 ? 'linear-gradient(90deg, #4ade80, #22c55e)' : 'linear-gradient(90deg, #facc15, #eab308)' }}></div>
+
+                        {/* Column 5: AI Score Badge */}
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
+                            <span style={{ color: asset.aiScore > 85 ? '#4ade80' : '#facc15', fontSize: '0.9rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px', textShadow: `0 0 10px ${asset.aiScore > 85 ? 'rgba(74, 222, 128, 0.4)' : 'rgba(250, 204, 21, 0.4)'}` }}>
+                                {asset.aiScore > 85 ? <TrendingUp size={16} /> : <AlertTriangle size={16} />}
+                                {asset.aiScore > 85 ? 'Güçlü Tut' : 'Riskli Radar'}
+                            </span>
+                            <div style={{ width: '80px', height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px', overflow: 'hidden' }}>
+                                <div style={{ width: `${Math.min(100, Math.max(0, asset.aiScore))}%`, height: '100%', background: asset.aiScore > 85 ? '#4ade80' : '#facc15' }}></div>
+                            </div>
+                            <span style={{ color: '#888', fontSize: '0.7rem' }}>Skor: <strong style={{ color: '#fff' }}>{asset.aiScore}</strong></span>
                         </div>
-                        <div style={{ textAlign: 'right', marginTop: '6px', color: '#888', fontSize: '0.8rem' }}>FINAL AI SKORU: <strong style={{ color: asset.aiScore > 85 ? '#4ade80' : '#facc15' }}>{asset.aiScore}</strong> / 100</div>
                     </div>
                 ))}
             </div>
@@ -275,8 +329,13 @@ export default function PortfolioManager() {
                                     <strong style={{ color: '#fff', fontSize: '1.2rem' }}>${selectedAsset.averageCost} ({selectedAsset.quantity})</strong>
                                 </div>
                                 <div style={{ background: 'rgba(0,0,0,0.2)', padding: '16px', borderRadius: '16px' }}>
-                                    <span style={{ color: '#888', fontSize: '0.9rem', display: 'block', marginBottom: '4px' }}>Aktif Zarar (DD)</span>
-                                    <strong style={{ color: selectedAsset.drawdown > 15 ? '#ef4444' : (selectedAsset.drawdown > 0 ? '#facc15' : '#4ade80'), fontSize: '1.2rem' }}>{selectedAsset.drawdown > 0 ? `-%${selectedAsset.drawdown}` : '%0'}</strong>
+                                    <span style={{ color: '#888', fontSize: '0.9rem', display: 'block', marginBottom: '4px' }}>Anlık Kâr / Zarar</span>
+                                    <strong style={{ color: selectedAsset.drawdown > 0 ? '#ef4444' : '#4ade80', fontSize: '1.2rem', display: 'flex', flexDirection: 'column' }}>
+                                        <span>{selectedAsset.drawdown > 0 ? `-%${selectedAsset.drawdown.toFixed(2)}` : `+%${Math.abs(selectedAsset.drawdown || 0).toFixed(2)}`}</span>
+                                        <span style={{ fontSize: '0.9rem', color: '#aaa', marginTop: '4px' }}>
+                                            {selectedAsset.drawdown > 0 ? '-' : '+'}${ Math.abs( (1000 * (selectedAsset.allocatedPercentage / 100)) * ((selectedAsset.drawdown || 0) / 100) ).toFixed(2) }
+                                        </span>
+                                    </strong>
                                 </div>
                                 <div style={{ background: 'rgba(0,0,0,0.2)', padding: '16px', borderRadius: '16px' }}>
                                     <span style={{ color: '#888', fontSize: '0.9rem', display: 'block', marginBottom: '4px' }}>FINAL AI GÜVENİ</span>
@@ -291,8 +350,8 @@ export default function PortfolioManager() {
                                     Yapay Zeka Yatırım Tezi (Investment Thesis)
                                 </h3>
                                 {sentiments.find(s => s.symbol === selectedAsset.symbol)?.detailedReport ? (
-                                    <div style={{ color: '#cbd5e1', lineHeight: '1.8', fontSize: '1rem', whiteSpace: 'pre-wrap' }}>
-                                        {sentiments.find(s => s.symbol === selectedAsset.symbol).detailedReport}
+                                    <div style={{ color: '#cbd5e1', lineHeight: '1.8', fontSize: '1rem' }}>
+                                        {renderMarkdown(sentiments.find(s => s.symbol === selectedAsset.symbol).detailedReport)}
                                     </div>
                                 ) : (
                                     <p style={{ color: '#888', fontStyle: 'italic' }}>Bu varlık için detaylı Yapay Zeka (LLM) raporu henüz oluşturulmamış veya sistem tarafından taranması bekleniyor.</p>

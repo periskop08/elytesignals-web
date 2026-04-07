@@ -337,25 +337,35 @@ export default function Dashboard({ user, onLogout }) {
   }, []);
 
   useEffect(() => {
+      let isSubscribed = true;
       if (selectedStock && !selectedStock.aiReport) {
-          axios.post('/api/llm/analyze', { symbol: selectedStock.symbol })
-               .then(res => {
-                   if (res.data && res.data.data) {
-                       setSelectedStock(prev => {
-                           if (prev && prev.symbol === selectedStock.symbol) {
-                               return {
-                                   ...prev,
-                                   aiReport: res.data.data.detailedReport,
-                                   flagReason: res.data.data.summary || prev.flagReason
-                               };
-                           }
-                           return prev;
-                       });
-                   }
-               })
-               .catch(err => console.error("AI Report Fetch Error:", err));
+          const fetchReport = () => {
+              axios.post('/api/llm/analyze', { symbol: selectedStock.symbol })
+                   .then(res => {
+                       if (!isSubscribed) return;
+                       if (res.data && res.data.data) {
+                           setSelectedStock(prev => {
+                               if (prev && prev.symbol === selectedStock.symbol) {
+                                   return {
+                                       ...prev,
+                                       aiReport: res.data.data.detailedReport,
+                                       flagReason: res.data.data.summary || prev.flagReason
+                                   };
+                               }
+                               return prev;
+                           });
+                       } else if (res.data && res.data.status === "processing") {
+                           setTimeout(() => {
+                               if (isSubscribed) fetchReport();
+                           }, 4000);
+                       }
+                   })
+                   .catch(err => console.error("AI Report Fetch Error:", err));
+          };
+          fetchReport();
       }
-  }, [selectedStock]);
+      return () => { isSubscribed = false; };
+  }, [selectedStock?.symbol]);
 
   const fetchSignals = async () => {
     try {
@@ -870,7 +880,7 @@ export default function Dashboard({ user, onLogout }) {
                                 </span>
                             </div>
                             <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px', marginTop: '12px', overflow: 'hidden' }}>
-                                <div style={{ width: `${Math.min(100, Math.max(0, (macroData.cgDom?.btc || 50)))}%`, height: '100%', background: 'linear-gradient(90deg, #facc15, #f59e0b)', borderRadius: '3px', transition: 'width 1s ease-in-out' }}></div>
+                                <div style={{ width: `${Math.min(100, Math.max(0, macroData.cgDom?.btc || 0))}%`, height: '100%', background: 'linear-gradient(90deg, #facc15, #f59e0b)', borderRadius: '3px', transition: 'width 1s ease-in-out' }}></div>
                             </div>
                             <p style={{ color: '#888', fontSize: '0.85rem', marginTop: '12px' }}>Kripto piyasasındaki toplam paranın yüzde kaçının Bitcoin'de olduğunu gösterir.</p>
                         </div>
@@ -891,7 +901,10 @@ export default function Dashboard({ user, onLogout }) {
                                     {macroData.cgDom?.usdt > 5 ? '🛑 YÜKSEK RİSK' : '✅ GÜVENLİ LİKİDİTE'}
                                 </span>
                             </div>
-                            <p style={{ color: '#888', fontSize: '0.85rem', marginTop: '8px' }}>Yatırımcıların nakitte bekleme oranıdır. Yükselmesi korkuyu, düşmesi piyasaya para girdiğini anlatır. %5 üzeri risklidir.</p>
+                            <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px', marginTop: '12px', overflow: 'hidden' }}>
+                                <div style={{ width: `${Math.min(100, Math.max(0, macroData.cgDom?.usdt || 0))}%`, height: '100%', background: 'linear-gradient(90deg, #22d3ee, #0891b2)', borderRadius: '3px', transition: 'width 1s ease-in-out' }}></div>
+                            </div>
+                            <p style={{ color: '#888', fontSize: '0.85rem', marginTop: '12px' }}>Yatırımcıların nakitte bekleme oranıdır. Yükselmesi korkuyu, düşmesi piyasaya para girdiğini anlatır. %5 üzeri risklidir.</p>
                         </div>
 
                         <div style={{ background: 'rgba(30, 41, 59, 0.5)', border: '1px solid rgba(255, 255, 255, 0.05)', borderRadius: '24px', padding: '24px', backdropFilter: 'blur(10px)', position: 'relative', overflow: 'hidden', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
@@ -911,7 +924,7 @@ export default function Dashboard({ user, onLogout }) {
                                 </span>
                             </div>
                             <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px', marginTop: '12px', overflow: 'hidden' }}>
-                                <div style={{ width: `${Math.min(100, Math.max(0, (macroData.cgDom?.alt || 10)*3))}%`, height: '100%', background: 'linear-gradient(90deg, #8b5cf6, #d946ef)', borderRadius: '3px', transition: 'width 1s ease-in-out' }}></div>
+                                <div style={{ width: `${Math.min(100, Math.max(0, macroData.cgDom?.alt || 0))}%`, height: '100%', background: 'linear-gradient(90deg, #8b5cf6, #d946ef)', borderRadius: '3px', transition: 'width 1s ease-in-out' }}></div>
                             </div>
                             <p style={{ color: '#888', fontSize: '0.85rem', marginTop: '12px' }}>Altcoinlere akan hacim. Ethereum (ETH) Proxy'si ile birlikte teyit edilir.</p>
                         </div>
