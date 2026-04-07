@@ -93,7 +93,9 @@ export default function PortfolioManager() {
         assets.forEach(a => {
             if (a.allocatedPercentage > 0) {
                 const allocatedDollars = baseCapital * (a.allocatedPercentage / 100);
-                const assetProfit = allocatedDollars * ((a.drawdown || 0) / 100);
+                // Drawdown is calculated as ((Cost - Price) / Cost). Negative means profit.
+                // Ergo, assetProfit = allocatedDollars * (-drawdown / 100)
+                const assetProfit = allocatedDollars * (-(a.drawdown || 0) / 100);
                 totalPnlValue += assetProfit;
             }
         });
