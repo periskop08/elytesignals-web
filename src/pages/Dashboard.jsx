@@ -336,6 +336,27 @@ export default function Dashboard({ user, onLogout }) {
      return () => clearInterval(statsInterval);
   }, []);
 
+  useEffect(() => {
+      if (selectedStock && !selectedStock.aiReport) {
+          axios.post('/api/llm/analyze', { symbol: selectedStock.symbol })
+               .then(res => {
+                   if (res.data && res.data.data) {
+                       setSelectedStock(prev => {
+                           if (prev && prev.symbol === selectedStock.symbol) {
+                               return {
+                                   ...prev,
+                                   aiReport: res.data.data.detailedReport,
+                                   flagReason: res.data.data.summary || prev.flagReason
+                               };
+                           }
+                           return prev;
+                       });
+                   }
+               })
+               .catch(err => console.error("AI Report Fetch Error:", err));
+      }
+  }, [selectedStock]);
+
   const fetchSignals = async () => {
     try {
       const res = await axios.get('/api/signals/active');
