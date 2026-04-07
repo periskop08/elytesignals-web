@@ -57,6 +57,20 @@ export default function PortfolioManager() {
         }
     };
 
+    const handleLiquidate = async (symbol) => {
+        if (!window.confirm(`${symbol} hissesinin tüm ağırlığını satıp doğrudan QQQ ETF'ine (Güvenli Liman) aktarmak istediğinize emin misiniz?`)) return;
+        
+        try {
+            await axios.post('/api/portfolio/liquidate', { symbol });
+            setSelectedAsset(null);
+            await fetchData();
+            alert(`${symbol} başarıyla satıldı ve ağırlığı QQQ'ya eklendi.`);
+        } catch(e) {
+            console.error(e);
+            alert("Satış İşlemi Başarısız!");
+        }
+    };
+
     const handleAiSubmit = async () => {
         if (!aiQuery) return;
         setAiLoading(true);
@@ -344,6 +358,35 @@ export default function PortfolioManager() {
                                     <strong style={{ color: selectedAsset.aiScore > 85 ? '#4ade80' : '#facc15', fontSize: '1.2rem' }}>{selectedAsset.aiScore} / 100</strong>
                                 </div>
                             </div>
+
+                            {/* Action Buttons Section */}
+                            {selectedAsset.symbol !== 'QQQ' && (
+                                <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'flex-end' }}>
+                                    <button 
+                                        onClick={() => handleLiquidate(selectedAsset.symbol)}
+                                        style={{ 
+                                            background: 'linear-gradient(90deg, #ef4444, #f43f5e)', 
+                                            color: '#fff', 
+                                            border: 'none', 
+                                            padding: '14px 24px', 
+                                            borderRadius: '12px', 
+                                            fontWeight: 'bold', 
+                                            fontSize: '1rem', 
+                                            cursor: 'pointer', 
+                                            display: 'flex', 
+                                            alignItems: 'center', 
+                                            gap: '8px', 
+                                            boxShadow: '0 4px 15px rgba(239, 68, 68, 0.4)',
+                                            transition: 'transform 0.2s ease'
+                                        }}
+                                        onMouseOver={e => e.currentTarget.style.transform = 'scale(1.05)'}
+                                        onMouseOut={e => e.currentTarget.style.transform = 'scale(1)'}
+                                    >
+                                        <Zap size={20} />
+                                        Tamamını Sat ve QQQ'ya Aktar
+                                    </button>
+                                </div>
+                            )}
 
                             {/* Detailed Report Component */}
                             <div style={{ background: 'rgba(30, 41, 59, 0.4)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)', padding: '24px' }}>
