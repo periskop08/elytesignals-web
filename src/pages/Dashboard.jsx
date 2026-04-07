@@ -1583,15 +1583,17 @@ export default function Dashboard({ user, onLogout }) {
                       <X size={20} />
                   </button>
                   <div style={{ position: 'absolute', top: '-50px', right: '-50px', width: '120px', height: '120px', background: selectedStock.redFlag ? '#ef4444' : '#10b981', filter: 'blur(70px)', opacity: 0.2 }}></div>
-                  <h2 style={{ margin: '0 0 5px 0', color: '#fff', fontSize: '1.8rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <h2 style={{ margin: '0 0 5px 0', color: '#fff', fontSize: '1.8rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingRight: '48px' }}>
                       {selectedStock.symbol}
-                      <span style={{ fontSize: '1.2rem', color: '#cbd5e1' }}>${selectedStock.price?.toFixed(2)}</span>
+                      {selectedStock.price !== undefined && (
+                          <span style={{ fontSize: '1.2rem', color: '#cbd5e1' }}>${selectedStock.price.toFixed(2)}</span>
+                      )}
                   </h2>
                   <div style={{ color: selectedStock.redFlag ? '#ef4444' : '#10b981', fontWeight: 'bold', marginBottom: '20px', fontSize: '1rem' }}>
                       {selectedStock.status}
                   </div>
                   
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: '12px', marginBottom: '20px' }}>
                       <div style={{ background: 'rgba(0,0,0,0.2)', padding: '10px 14px', borderRadius: '12px' }}>
                           <div style={{ color: '#888', fontSize: '0.8rem' }}>İleri F/K</div>
                           <span style={{ color: '#fff', fontWeight: 'bold' }}>{selectedStock.pe?.toFixed(2) || 'N/A'}</span>
