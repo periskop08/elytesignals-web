@@ -668,8 +668,8 @@ export default function Dashboard({ user, onLogout }) {
                 )}
             </div>
 
-            {/* Sütun 5: Aksiyon */}
-            <div className="action-column-mobile">
+            {/* Sütun 6: Aksiyon */}
+            <div className={`action-column-mobile ${isFavTab && s.status === 'ACTIVE' ? 'has-buttons' : ''}`}>
                 {isFavTab && s.status === 'ACTIVE' ? (
                     <div style={{ display: 'flex', gap: '8px' }}>
                         {userTrade && userTrade.status === 'ACTIVE' && (

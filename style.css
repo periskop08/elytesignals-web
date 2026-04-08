@@ -882,6 +882,16 @@ footer {
      padding-top: 0 !important;
      order: 6;
   }
+  
+  /* Sütun 6 eger buton iceriyorsa (Favorites Sekmesi) Mutlak Konumu iptal et */
+  .signal-card-row > div.action-column-mobile.has-buttons {
+     position: static !important;
+     grid-column: span 2;
+     display: flex !important;
+     justify-content: center !important;
+     width: 100% !important;
+     margin-top: 8px;
+  }
 
   .price-table-mobile {
      display: flex !important;
