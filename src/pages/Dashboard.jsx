@@ -394,12 +394,11 @@ export default function Dashboard({ user, onLogout }) {
 
   const fetchPrices = async () => {
     try {
-      const res = await axios.get('https://open-api.bingx.com/openApi/swap/v2/quote/ticker');
-      if (res.data && res.data.data) {
+      const res = await axios.get('https://api.binance.com/api/v3/ticker/price');
+      if (res.data && Array.isArray(res.data)) {
          const prices = {};
-         res.data.data.forEach(t => {
-            const sym = t.symbol.replace('-', ''); // Convert 'FET-USDT' to 'FETUSDT'
-            prices[sym] = parseFloat(t.lastPrice);
+         res.data.forEach(t => {
+            prices[t.symbol] = parseFloat(t.price);
          });
          setLivePrices(prices);
       }
