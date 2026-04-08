@@ -825,43 +825,76 @@ footer {
 
   .signals-panel {
       padding: 10px !important;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
+      overflow-x: hidden !important;
   }
 
-  /* Mobile Customizations for Signal Row - Scaled Web View */
+  /* Mobile Customizations for Signal Row - Compact Grid Fit */
   .signal-row-header { 
-      display: grid !important; 
-      min-width: 860px;
+      display: none !important; 
   }
   .signal-card-row {
      display: grid !important;
-     grid-template-columns: 1fr 1.5fr 1fr 1.1fr 1.1fr 0.8fr !important;
-     min-width: 860px;
-     gap: 0;
+     grid-template-columns: 1fr 1fr !important;
+     gap: 16px 12px;
+     min-width: unset !important;
      padding: 16px;
-     align-items: center;
+     position: relative;
   }
-  .signal-card-row > div {
-     justify-content: center !important;
-     width: auto;
-  }
-  .signal-card-row > div:first-child {
+  
+  /* Sütun 1: Varlık & Yön (Sol Üst) */
+  .signal-card-row > div:nth-child(1) {
+     order: 1;
      justify-content: flex-start !important;
+     grid-column: span 1;
   }
+  /* Sütun 5: Canlı PnL (Sağ Üst) */
+  .signal-card-row > div:nth-child(5) {
+     order: 2;
+     justify-content: flex-end !important;
+     align-items: flex-end !important;
+     grid-column: span 1;
+     padding-right: 28px; /* Yıldız ikonu için boşluk */
+  }
+  /* Sütun 2: Fiyat Tablosu (Orta Tam Genişlik) */
+  .signal-card-row > div:nth-child(2) {
+     order: 3;
+     grid-column: span 2;
+  }
+  /* Sütun 4: Anlık Fiyat (Sol Alt) */
+  .signal-card-row > div:nth-child(4) {
+     order: 4;
+     justify-content: flex-start !important;
+     align-items: flex-start !important;
+  }
+  /* Sütun 3: Kalite & Filtreler (Sağ Alt) */
+  .signal-card-row > div:nth-child(3) {
+     order: 5;
+     justify-content: flex-end !important;
+     align-items: flex-end !important;
+  }
+  /* Sütun 6: Aksiyon / Yıldız (En Sağ Üst Mutlak Konum) */
+  .signal-card-row > div:nth-child(6) {
+     position: absolute;
+     right: 14px;
+     top: 14px;
+     width: auto !important;
+     border-top: none !important;
+     padding-top: 0 !important;
+     order: 6;
+  }
+
   .price-table-mobile {
      display: flex !important;
-     justify-content: center !important;
-     gap: 16px !important;
-     width: auto;
-     background: transparent;
-     padding: 0;
-     border-radius: 0;
+     justify-content: space-between !important;
+     gap: 8px !important;
+     width: 100%;
+     background: rgba(0,0,0,0.2);
+     padding: 12px;
+     border-radius: 12px;
   }
   .action-column-mobile {
      display: flex !important;
      justify-content: center !important;
-     width: auto;
      border-top: none;
      padding-top: 0;
   }
