@@ -394,14 +394,33 @@ export default function Dashboard({ user, onLogout }) {
 
   const fetchPrices = async () => {
     try {
-      const res = await axios.get('https://api.binance.com/api/v3/ticker/price');
-      if (res.data && Array.isArray(res.data)) {
-         const prices = {};
-         res.data.forEach(t => {
-            prices[t.symbol] = parseFloat(t.price);
-         });
-         setLivePrices(prices);
+      const prices = {};
+      
+      // 1. Önce Bybit'ten çek (Çoğu altcoin ve memecoin'i kapsar)
+      try {
+        const bybitRes = await axios.get('https://api.bybit.com/v5/market/tickers?category=linear');
+        if (bybitRes.data && bybitRes.data.result && bybitRes.data.result.list) {
+           bybitRes.data.result.list.forEach(t => {
+              prices[t.symbol] = parseFloat(t.lastPrice);
+           });
+        }
+      } catch (e) {
+        console.warn("Bybit API error", e);
       }
+
+      // 2. Sonra Binance'den çek (FET gibi Bybit'te olmayanları tamamlar)
+      try {
+        const binanceRes = await axios.get('https://api.binance.com/api/v3/ticker/price');
+        if (binanceRes.data && Array.isArray(binanceRes.data)) {
+           binanceRes.data.forEach(t => {
+              prices[t.symbol] = parseFloat(t.price);
+           });
+        }
+      } catch (e) {
+        console.warn("Binance API error", e);
+      }
+
+      setLivePrices(prices);
     } catch(e) {}
   };
 
