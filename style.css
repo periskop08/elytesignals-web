@@ -825,35 +825,45 @@ footer {
 
   .signals-panel {
       padding: 10px !important;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
   }
 
-  /* Mobile Customizations for Signal Row */
-  .signal-row-header { display: none; }
+  /* Mobile Customizations for Signal Row - Scaled Web View */
+  .signal-row-header { 
+      display: grid !important; 
+      min-width: 860px;
+  }
   .signal-card-row {
-     display: flex;
-     flex-direction: column;
-     align-items: stretch;
-     gap: 14px;
-     padding: 14px;
+     display: grid !important;
+     grid-template-columns: 1fr 1.5fr 1fr 1.1fr 1.1fr 0.8fr !important;
+     min-width: 860px;
+     gap: 0;
+     padding: 16px;
+     align-items: center;
   }
   .signal-card-row > div {
-     justify-content: space-between !important;
-     width: 100%;
+     justify-content: center !important;
+     width: auto;
+  }
+  .signal-card-row > div:first-child {
+     justify-content: flex-start !important;
   }
   .price-table-mobile {
      display: flex !important;
-     justify-content: space-between !important;
-     width: 100%;
-     background: rgba(0,0,0,0.2);
-     padding: 12px;
-     border-radius: 12px;
+     justify-content: center !important;
+     gap: 16px !important;
+     width: auto;
+     background: transparent;
+     padding: 0;
+     border-radius: 0;
   }
   .action-column-mobile {
      display: flex !important;
-     justify-content: space-between !important;
-     width: 100%;
-     border-top: 1px solid rgba(255,255,255,0.05);
-     padding-top: 12px;
+     justify-content: center !important;
+     width: auto;
+     border-top: none;
+     padding-top: 0;
   }
 
   /* Mobile Top Header */
