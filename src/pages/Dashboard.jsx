@@ -1511,7 +1511,7 @@ export default function Dashboard({ user, onLogout }) {
                 </div>
                 <div>
                    <h3 style={{ fontSize: '1.1rem', letterSpacing: '0.5px' }}>Periskop AI Sohbet</h3>
-                   <p style={{ fontSize: '0.8rem', color: '#888' }}>GPT-4 Turbo ile desteklenir</p>
+                   <p style={{ fontSize: '0.8rem', color: '#888' }}>Gemini 2.5 Pro ile desteklenir</p>
                 </div>
             </div>
             <button onClick={() => setIsChatOpen(false)} style={{ background: 'transparent', border: 'none', color: '#888', cursor: 'pointer', padding: '4px' }}>
