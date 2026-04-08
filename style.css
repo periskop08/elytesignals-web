@@ -564,6 +564,52 @@ footer {
   color: #666;
 }
 
+/* Signal Table Mode */
+.signals-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.signal-row-header {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr 1.5fr 1.5fr 1fr;
+  padding: 0 16px 8px 16px;
+  color: #64748b;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: bold;
+}
+
+.signal-card-row {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr 1.5fr 1.5fr 1fr;
+  align-items: center;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.05);
+  padding: 16px;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.1);
+  position: relative;
+}
+
+.signal-card-row:hover {
+  background: rgba(255,255,255,0.06);
+  transform: translateY(-2px);
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.1), 0 8px 16px rgba(0,0,0,0.2);
+}
+
+.signal-card-row.LONG { border-left: 4px solid #4ade80; }
+.signal-card-row.SHORT { border-left: 4px solid #ef4444; }
+
+.price-table-mobile { display: flex; justify-content: center; gap: 16px; font-size: 0.85rem; }
+.action-column-mobile { display: flex; justify-content: flex-end; align-items: center; gap: 10px; }
+
+
 /* AI Chat Panel (Now Floating) */
 .chat-fab {
   position: fixed;
@@ -779,6 +825,35 @@ footer {
 
   .signals-panel {
       padding: 10px !important;
+  }
+
+  /* Mobile Customizations for Signal Row */
+  .signal-row-header { display: none; }
+  .signal-card-row {
+     display: flex;
+     flex-direction: column;
+     align-items: stretch;
+     gap: 14px;
+     padding: 14px;
+  }
+  .signal-card-row > div {
+     justify-content: space-between !important;
+     width: 100%;
+  }
+  .price-table-mobile {
+     display: flex !important;
+     justify-content: space-between !important;
+     width: 100%;
+     background: rgba(0,0,0,0.2);
+     padding: 12px;
+     border-radius: 12px;
+  }
+  .action-column-mobile {
+     display: flex !important;
+     justify-content: space-between !important;
+     width: 100%;
+     border-top: 1px solid rgba(255,255,255,0.05);
+     padding-top: 12px;
   }
 
   /* Mobile Top Header */

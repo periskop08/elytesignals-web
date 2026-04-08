@@ -439,12 +439,14 @@ export default function Dashboard({ user, onLogout }) {
     if(!chatInput.trim() || chatLoading) return;
     
     const userMsg = chatInput;
+    const currentHistory = [...chatLog];
+    
     setChatLog([...chatLog, { sender: 'user', text: userMsg }]);
     setChatInput('');
     setChatLoading(true);
 
     try {
-      const resp = await axios.post('/api/analysis', { coin: userMsg });
+      const resp = await axios.post('/api/analysis', { coin: userMsg, history: currentHistory });
       setChatLog(prev => [...prev, { sender: 'ai', text: resp.data.message || 'Analiz tamamlandı.' }]);
     } catch (err) {
       setChatLog(prev => [...prev, { sender: 'ai', text: 'Sistem hatası. AWS sunucusuna ulaşılamadı. Lütfen VIP grubunu kontrol edin.' }]);
@@ -492,6 +494,16 @@ export default function Dashboard({ user, onLogout }) {
       }
   };
 
+  const renderTableHeader = () => (
+      <div className="signal-row-header">
+          <span>Varlık & Yön</span>
+          <span style={{ textAlign: 'center' }}>Fiyat Tablosu</span>
+          <span style={{ textAlign: 'center' }}>Sinyal Durumu</span>
+          <span style={{ textAlign: 'center' }}>Canlı PnL</span>
+          <span style={{ textAlign: 'right' }}>Aksiyon</span>
+      </div>
+  );
+
   const renderSignalCard = (s, isFavTab) => {
     const isLong = s.type === 'LONG';
     const isFav = favorites.some(f => f.id === s.id && f.status === 'ACTIVE');
@@ -533,131 +545,103 @@ export default function Dashboard({ user, onLogout }) {
     const isNew = newSignalIds.includes(s.id);
 
     return (
-        <div className={`signal-card ${s.type} ${isNew ? 'new-signal-blink' : ''}`} key={isFavTab ? `fav-${s.favoriteId || s.id}` : s.id} style={{ marginBottom: '12px', cursor: 'pointer' }} onClick={() => setSelectedSignal(s)}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                <div style={{ display: 'flex', alignItems: 'center' }}>
-                    <div style={{ width: '42px', height: '42px', borderRadius: '12px', backgroundColor: isLong ? 'rgba(74, 222, 128, 0.15)' : 'rgba(248, 113, 113, 0.15)', display: 'flex', justifyContent: 'center', alignItems: 'center', marginRight: '14px' }}>
-                        {isLong ? <TrendingUp color={isLong ? '#4ade80' : '#f87171'} size={20} /> : <TrendingDown color={isLong ? '#4ade80' : '#f87171'} size={20} />}
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <span style={{ color: '#fff', fontSize: '1.2rem', fontWeight: 'bold' }}>{s.symbol}</span>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '4px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <span style={{ color: '#888', fontSize: '0.8rem' }}>{new Date(s.createdAt + 'Z').toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                                <div style={{ display: 'flex', alignItems: 'center', backgroundColor: 'rgba(56, 189, 248, 0.15)', padding: '2px 6px', borderRadius: '6px' }}>
-                                    <Zap color="#38bdf8" size={10} fill="#38bdf8" style={{marginRight: 4}} />
-                                    <span style={{color: '#38bdf8', fontSize: '0.75rem', fontWeight: 'bold'}}>{s.qualityScore || 0}</span>
-                                </div>
-                            </div>
-                            
-                            {(s.dailyCount > 1 || (hasPastTrades && s.status === 'ACTIVE') || (s.warnings && s.warnings.includes('Flag'))) && (
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                                    {s.warnings && s.warnings.includes('Flag') && (
-                                        <div style={{ display: 'flex', alignItems: 'center', backgroundColor: 'rgba(236, 72, 153, 0.15)', padding: '2px 6px', borderRadius: '6px' }}>
-                                            <Flag color="#ec4899" size={10} style={{marginRight: 4}} />
-                                            <span style={{color: '#ec4899', fontSize: '0.75rem', fontWeight: 'bold'}}>Bayrak Formasyonu</span>
-                                        </div>
-                                    )}
-                                    {s.dailyCount > 1 && (
-                                        <div style={{ display: 'flex', alignItems: 'center', backgroundColor: 'rgba(249, 115, 22, 0.15)', padding: '2px 6px', borderRadius: '6px' }}>
-                                            <AlertTriangle color="#f97316" size={10} style={{marginRight: 4}} />
-                                            <span style={{color: '#f97316', fontSize: '0.75rem', fontWeight: 'bold'}}>Gün: #{s.dailyCount}</span>
-                                        </div>
-                                    )}
-                                    {hasPastTrades && s.status === 'ACTIVE' && (
-                                        <div style={{ display: 'flex', alignItems: 'center', backgroundColor: 'rgba(168, 85, 247, 0.15)', padding: '2px 6px', borderRadius: '6px' }}>
-                                            <RefreshCcw color="#a855f7" size={10} style={{marginRight: 4}} />
-                                            <span style={{color: '#a855f7', fontSize: '0.75rem', fontWeight: 'bold'}}>Tekrar İşlem</span>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-        
-                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                    {pnl !== null && (
-                        <div className={`pnl-badge ${pnl > 0 ? 'profit' : 'loss'} ${blinkClass}`}>
-                            {pnl > 0 ? '+' : ''}{pnl.toFixed(2)}%
-                        </div>
-                    )}
-                    <span style={{ color: isLong ? '#4ade80' : '#f87171', fontWeight: 'bold', fontSize: '0.95rem', letterSpacing: '0.5px' }}>{s.type}</span>
-                    <Star color={isFav ? '#eab308' : '#555'} fill={isFav ? '#eab308' : 'none'} size={24} style={{cursor: 'pointer'}} onClick={(e) => { e.stopPropagation(); toggleFavorite(s); }} />
-                </div>
-            </div>
-        
-            <div style={{ display: 'flex', justifyContent: 'space-between', backgroundColor: 'rgba(0,0,0,0.25)', padding: '16px', borderRadius: '14px' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
-                    <span style={{ color: '#aaa', fontSize: '0.75rem', marginBottom: '8px' }}>Giriş</span>
-                    <span style={{ color: '#fff', fontSize: '1rem', fontWeight: '600' }}>${fmtPrice(s.entryPrice)}</span>
-                </div>
-        
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '8px' }}>
-                        <span style={{ color: '#aaa', fontSize: '0.75rem' }}>Hedef</span>
-                        <span style={{ color: '#4ade80', fontSize: '0.65rem', fontWeight: 'bold' }}>(+%{(Math.abs(s.targetPrice - s.entryPrice) / s.entryPrice * 100).toFixed(2)})</span>
-                    </div>
-                    <span style={{ color: '#fff', fontSize: '1rem', fontWeight: '600' }}>${fmtPrice(s.targetPrice)}</span>
-                </div>
-        
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '8px' }}>
-                        <span style={{ color: '#aaa', fontSize: '0.75rem' }}>Stop Loss</span>
-                        <span style={{ color: '#f87171', fontSize: '0.65rem', fontWeight: 'bold' }}>(-%{(Math.abs(s.stopPrice - s.entryPrice) / s.entryPrice * 100).toFixed(2)})</span>
-                    </div>
-                    <span style={{ color: '#fff', fontSize: '1rem', fontWeight: '600' }}>${fmtPrice(s.stopPrice)}</span>
-                </div>
-            </div>
+        <div className={`signal-card-row ${s.type} ${isNew ? 'new-signal-blink' : ''}`} key={isFavTab ? `fav-${s.favoriteId || s.id}` : s.id} onClick={() => setSelectedSignal(s)}>
             
-            {/* OTOPILOT BİLGİLENDİRME ve KAPAT BUTONU */}
-            {userTrade && (
-                <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    {userTrade.status === 'ACTIVE' ? (
-                        <>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                <Bot size={16} color="#38bdf8" />
-                                <span style={{ color: '#38bdf8', fontSize: '0.85rem', fontWeight: 'bold' }}>Emir Gönderildi (Açık)</span>
-                            </div>
-                            {isFavTab && (
-                                <button 
-                                    onClick={(e) => closeUserTrade(e, userTrade.id)}
-                                    disabled={closingTradeId === userTrade.id}
-                                    style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.3)', padding: '6px 12px', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 'bold', cursor: 'pointer', transition: 'all 0.2s' }}
-                                >
-                                    {closingTradeId === userTrade.id ? 'Kapatılıyor...' : 'İşlemi Kapat'}
-                                </button>
-                            )}
-                        </>
-                    ) : (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <History size={16} color={userTrade.pnl > 0 ? '#4ade80' : '#f87171'} />
-                            <span style={{ color: userTrade.pnl > 0 ? '#4ade80' : '#f87171', fontSize: '0.85rem', fontWeight: 'bold' }}>
-                                Önceki İşlem: {userTrade.pnl > 0 ? 'KÂR' : 'ZARAR'} ({userTrade.pnl > 0 ? '+' : ''}{userTrade.pnl.toFixed(2)}%).
-                            </span>
-                        </div>
-                    )}
+            {/* Sütun 1: Varlık & Yön */}
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+                <div style={{ width: '42px', height: '42px', borderRadius: '12px', backgroundColor: isLong ? 'rgba(74, 222, 128, 0.15)' : 'rgba(248, 113, 113, 0.15)', display: 'flex', justifyContent: 'center', alignItems: 'center', marginRight: '14px' }}>
+                    {isLong ? <TrendingUp color={isLong ? '#4ade80' : '#f87171'} size={20} /> : <TrendingDown color={isLong ? '#4ade80' : '#f87171'} size={20} />}
                 </div>
-            )}
-            {(!userTrade || userTrade.status !== 'ACTIVE') && isFavTab && s.status === 'ACTIVE' && (
-                <div style={{ marginTop: '12px' }}>
-                    {user.isAdmin ? (
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <span style={{ color: '#fff', fontSize: '1.2rem', fontWeight: 'bold' }}>{s.symbol}</span>
+                    <span style={{ color: isLong ? '#4ade80' : '#f87171', fontWeight: 'bold', fontSize: '0.85rem', letterSpacing: '0.5px' }}>{s.type}</span>
+                </div>
+            </div>
+
+            {/* Sütun 2: Fiyat Tablosu */}
+            <div className="price-table-mobile">
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <span style={{ color: '#aaa', fontSize: '0.75rem', marginBottom: '2px' }}>Giriş</span>
+                    <span style={{ color: '#fff', fontSize: '0.95rem', fontWeight: '600' }}>${fmtPrice(s.entryPrice)}</span>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <span style={{ color: '#aaa', fontSize: '0.75rem', marginBottom: '2px' }}>Hedef</span>
+                    <span style={{ color: '#4ade80', fontSize: '0.95rem', fontWeight: '600' }}>${fmtPrice(s.targetPrice)}</span>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <span style={{ color: '#aaa', fontSize: '0.75rem', marginBottom: '2px' }}>Stop Loss</span>
+                    <span style={{ color: '#f87171', fontSize: '0.95rem', fontWeight: '600' }}>${fmtPrice(s.stopPrice)}</span>
+                </div>
+            </div>
+
+            {/* Sütun 3: Kalite & Filtreler */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', backgroundColor: 'rgba(56, 189, 248, 0.15)', padding: '2px 8px', borderRadius: '6px' }}>
+                    <Zap color="#38bdf8" size={12} fill="#38bdf8" style={{marginRight: 4}} />
+                    <span style={{color: '#38bdf8', fontSize: '0.8rem', fontWeight: 'bold'}}>Skor: {s.qualityScore || 0}</span>
+                </div>
+                {(s.dailyCount > 1 || (hasPastTrades && s.status === 'ACTIVE') || (s.warnings && s.warnings.includes('Flag'))) && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                        {s.warnings && s.warnings.includes('Flag') && (
+                            <Flag color="#ec4899" size={14} title="Bayrak Formasyonu" />
+                        )}
+                        {s.dailyCount > 1 && (
+                            <AlertTriangle color="#f97316" size={14} title={`Gün: #${s.dailyCount}`} />
+                        )}
+                        {hasPastTrades && s.status === 'ACTIVE' && (
+                            <RefreshCcw color="#a855f7" size={14} title="Tekrar İşlem" />
+                        )}
+                    </div>
+                )}
+                <span style={{ color: '#888', fontSize: '0.7rem' }}>{new Date(s.createdAt + 'Z').toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+            </div>
+
+            {/* Sütun 4: Canlı PnL Durumu */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                {pnl !== null ? (
+                    <div className={`pnl-badge ${pnl > 0 ? 'profit' : 'loss'} ${blinkClass}`} style={{ margin: 0, padding: '4px 12px', fontSize: '1rem' }}>
+                        {pnl > 0 ? '+' : ''}{pnl.toFixed(2)}%
+                    </div>
+                ) : (
+                    <span style={{ color: '#888', fontSize: '0.85rem' }}>Veri Yok</span>
+                )}
+                {userTrade && userTrade.status === 'ACTIVE' && (
+                    <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <Bot size={14} color="#38bdf8" />
+                        <span style={{ color: '#38bdf8', fontSize: '0.75rem', fontWeight: 'bold' }}>Açık Otopilot</span>
+                    </div>
+                )}
+                {userTrade && userTrade.status !== 'ACTIVE' && (
+                    <span style={{ color: userTrade.pnl > 0 ? '#4ade80' : '#f87171', fontSize: '0.75rem', marginTop: '6px', fontWeight: 'bold' }}>
+                        Geçmiş: {userTrade.pnl > 0 ? '+' : ''}{userTrade.pnl.toFixed(2)}%
+                    </span>
+                )}
+            </div>
+
+            {/* Sütun 5: Aksiyon */}
+            <div className="action-column-mobile">
+                {isFavTab && s.status === 'ACTIVE' ? (
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                        {userTrade && userTrade.status === 'ACTIVE' && (
+                            <button 
+                                onClick={(e) => closeUserTrade(e, userTrade.id)}
+                                disabled={closingTradeId === userTrade.id}
+                                style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.3)', padding: '6px 12px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 'bold', cursor: 'pointer', transition: 'all 0.2s' }}
+                            >
+                                {closingTradeId === userTrade.id ? '...' : 'Oto Kapat'}
+                            </button>
+                        )}
                         <button 
                             onClick={(e) => closeFavoriteTrade(e, s.id, pnl || 0)}
-                            style={{ width: '100%', background: pnl >= 0 ? 'rgba(74, 222, 128, 0.1)' : 'rgba(239, 68, 68, 0.1)', color: pnl >= 0 ? '#4ade80' : '#ef4444', border: `1px solid ${pnl >= 0 ? 'rgba(74, 222, 128, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`, padding: '10px', borderRadius: '8px', fontSize: '0.9rem', fontWeight: 'bold', cursor: 'pointer', transition: 'all 0.2s', textAlign: 'center' }}
+                            style={{ background: pnl >= 0 ? 'rgba(74, 222, 128, 0.1)' : 'rgba(239, 68, 68, 0.1)', color: pnl >= 0 ? '#4ade80' : '#ef4444', border: `1px solid ${pnl >= 0 ? 'rgba(74, 222, 128, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`, padding: '6px 12px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 'bold', cursor: 'pointer', transition: 'all 0.2s' }}
                         >
-                            İŞLEMİ SONLANDIR (BİNGX)
+                            İşlemi Sonlandır
                         </button>
-                    ) : (
-                        <button 
-                            onClick={(e) => closeFavoriteTrade(e, s.id, pnl || 0)}
-                            style={{ width: '100%', background: 'rgba(255, 255, 255, 0.05)', color: '#fff', border: '1px solid rgba(255, 255, 255, 0.1)', padding: '10px', borderRadius: '8px', fontSize: '0.9rem', fontWeight: 'bold', cursor: 'pointer', transition: 'all 0.2s', textAlign: 'center' }}
-                        >
-                            TAKİP LİSTESİNDEN ÇIKAR
-                        </button>
-                    )}
-                </div>
-            )}
+                    </div>
+                ) : (
+                    <Star color={isFav ? '#eab308' : '#555'} fill={isFav ? '#eab308' : 'none'} size={24} style={{cursor: 'pointer'}} onClick={(e) => { e.stopPropagation(); toggleFavorite(s); }} />
+                )}
+            </div>
         </div>
     );
   };
@@ -1155,7 +1139,8 @@ export default function Dashboard({ user, onLogout }) {
                    <p style={{ color: '#888' }}>Sinyaller Taranıyor...</p>
                </div>
             ) : (
-                <div className="signals-grid">
+                <div className="signals-list">
+                    {renderTableHeader()}
                     {activeMainSignals.length === 0 ? (
                         <div className="glass" style={{ padding: '3rem', textAlign: 'center', gridColumn: '1 / -1', borderRadius: '20px' }}>
                             <Target size={40} color="#888" style={{ marginBottom: '1rem' }} />
@@ -1257,7 +1242,8 @@ export default function Dashboard({ user, onLogout }) {
                    <h2 style={{ marginTop: '1rem', color: '#888' }}>{favFilter === 'ACTIVE' ? 'Aktif Favoriniz Yok' : (favFilter === 'WIN' ? 'Henüz TP olan işleminiz yok.' : (favFilter === 'ALL' ? 'İzleme listeniz tamamen boş.' : 'Henüz SL olan işleminiz yok.'))}</h2>
                 </div>
             ) : (
-                <div className="signals-grid">
+                <div className="signals-list">
+                   {renderTableHeader()}
                    {displayedFavorites.map(s => renderSignalCard(s, true))}
                 </div>
             )}
@@ -1381,7 +1367,8 @@ export default function Dashboard({ user, onLogout }) {
                       <span style={{ color: '#888' }}>Bu kategoride işlem bulunmuyor.</span>
                   </div>
               ) : (
-                  <div className="signals-grid">
+                  <div className="signals-list">
+                      {renderTableHeader()}
                       {historicalSignals.map(s => renderSignalCard(s, false))}
                   </div>
               )}
