@@ -420,6 +420,18 @@ export default function Dashboard({ user, onLogout }) {
         console.warn("Binance API error", e);
       }
 
+      // 3. Elyte Backend Proxy'den (Geleneksel Varlıklar: XAUUSD, XAGUSD, NASDAQ vb.) - CORS yok
+      try {
+        const assetRes = await axios.get('/api/prices/assets');
+        if (assetRes.data && typeof assetRes.data === 'object' && !Array.isArray(assetRes.data)) {
+           Object.keys(assetRes.data).forEach(key => {
+              prices[key] = parseFloat(assetRes.data[key]);
+           });
+        }
+      } catch (e) {
+        console.warn("Proxy Asset API error", e);
+      }
+
       setLivePrices(prices);
     } catch(e) {}
   };
