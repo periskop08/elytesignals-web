@@ -499,6 +499,7 @@ export default function Dashboard({ user, onLogout }) {
           <span>Varlık & Yön</span>
           <span style={{ textAlign: 'center' }}>Fiyat Tablosu</span>
           <span style={{ textAlign: 'center' }}>Sinyal Durumu</span>
+          <span style={{ textAlign: 'center' }}>Anlık Fiyat</span>
           <span style={{ textAlign: 'center' }}>Canlı PnL</span>
           <span style={{ textAlign: 'right' }}>Aksiyon</span>
       </div>
@@ -596,7 +597,23 @@ export default function Dashboard({ user, onLogout }) {
                 <span style={{ color: '#888', fontSize: '0.7rem' }}>{new Date(s.createdAt + 'Z').toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
             </div>
 
-            {/* Sütun 4: Canlı PnL Durumu */}
+            {/* Sütun 4: Anlık Fiyat */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                {currentPrice ? (
+                    <>
+                        <span style={{ color: '#fff', fontSize: '1rem', fontWeight: 'bold' }}>${fmtPrice(currentPrice)}</span>
+                        {s.entryPrice && (
+                            <span style={{ color: (s.type === 'LONG' ? (currentPrice > s.entryPrice) : (currentPrice < s.entryPrice)) ? '#4ade80' : '#f87171', fontSize: '0.75rem', marginTop: '4px', fontWeight: 'bold' }}>
+                                (Mevcut)
+                            </span>
+                        )}
+                    </>
+                ) : (
+                    <span style={{ color: '#888', fontSize: '0.85rem' }}>Veri Yok</span>
+                )}
+            </div>
+
+            {/* Sütun 5: Canlı PnL Durumu */}
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                 {pnl !== null ? (
                     <div className={`pnl-badge ${pnl > 0 ? 'profit' : 'loss'} ${blinkClass}`} style={{ margin: 0, padding: '4px 12px', fontSize: '1rem' }}>
