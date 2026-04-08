@@ -542,7 +542,13 @@ export default function Dashboard({ user, onLogout }) {
     const isLong = s.type === 'LONG';
     const isFav = favorites.some(f => f.id === s.id && f.status === 'ACTIVE');
     const userTrade = userTrades.find(t => t.signalId === s.id);
-    const fmtPrice = val => parseFloat(val).toLocaleString('en-US', {maximumFractionDigits:5});
+    const fmtPrice = val => {
+        const v = parseFloat(val);
+        if (isNaN(v)) return val;
+        if (v >= 1000) return v.toLocaleString('en-US', {maximumFractionDigits:2});
+        if (v >= 10) return v.toLocaleString('en-US', {maximumFractionDigits:3});
+        return v.toLocaleString('en-US', {maximumFractionDigits:5});
+    };
     
     const symbolKey = s.coin ? s.coin.replace('/', '') : s.symbol.replace('/', '');
     const currentPrice = livePrices[symbolKey];
@@ -804,13 +810,43 @@ export default function Dashboard({ user, onLogout }) {
                     </div>
                     
                     <div style={{ height: '480px', width: '100%' }}>
-                        <iframe 
-                            src={`https://s.tradingview.com/widgetembed/?frameElementId=tradingview_chart&symbol=BINGX%3A${(selectedSignal.coin || selectedSignal.symbol).replace('/', '')}.P&interval=60&symboledit=1&saveimage=1&toolbarbg=f1f3f6&studies=%5B%5D&theme=dark&style=1&timezone=Etc%2FUTC&studies_overrides=%7B%7D&overrides=%7B%7D&enabled_features=%5B%5D&disabled_features=%5B%5D&locale=tr&utm_source=localhost&utm_medium=widget&utm_campaign=chart&utm_term=BINGX%3A${(selectedSignal.coin || selectedSignal.symbol).replace('/', '')}.P`}
-                            style={{ width: '100%', height: '100%', border: 'none' }}
-                            allowTransparency="true"
-                            scrolling="no"
-                            allowFullScreen
-                        ></iframe>
+                        {(() => {
+                            const getTradingViewSymbol = (symbol) => {
+                                const s = symbol.replace('/', '');
+                                const tvMap = {
+                                    'SP500': 'SP:SPX',
+                                    'NASDAQ100': 'NASDAQ:NDX',
+                                    'DOW': 'DJI',
+                                    'GOLD': 'OANDA:XAUUSD',
+                                    'XAGUSD': 'OANDA:XAGUSD',
+                                    'BRENT': 'TVC:UKOIL',
+                                    'WTI': 'TVC:USOIL',
+                                    'EURUSD': 'OANDA:EURUSD',
+                                    'AAPL': 'NASDAQ:AAPL',
+                                    'TSLA': 'NASDAQ:TSLA',
+                                    'NVDA': 'NASDAQ:NVDA',
+                                    'AMD': 'NASDAQ:AMD',
+                                    'MSFT': 'NASDAQ:MSFT',
+                                    'COIN': 'NASDAQ:COIN',
+                                    'HOOD': 'NASDAQ:HOOD'
+                                };
+                                if (tvMap[s]) return tvMap[s];
+                                if (!s.includes('USDT')) return `NASDAQ:${s}`;
+                                return `BINGX:${s}.P`;
+                            };
+                            
+                            const tvSymbol = getTradingViewSymbol(selectedSignal.coin || selectedSignal.symbol);
+                            
+                            return (
+                                <iframe 
+                                    src={`https://s.tradingview.com/widgetembed/?frameElementId=tradingview_chart&symbol=${encodeURIComponent(tvSymbol)}&interval=60&symboledit=1&saveimage=1&toolbarbg=f1f3f6&studies=%5B%5D&theme=dark&style=1&timezone=Etc%2FUTC`}
+                                    style={{ width: '100%', height: '100%', border: 'none' }}
+                                    allowTransparency="true"
+                                    scrolling="no"
+                                    allowFullScreen
+                                ></iframe>
+                            );
+                        })()}
                     </div>
                 </div>
 
