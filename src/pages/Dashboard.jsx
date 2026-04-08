@@ -566,18 +566,14 @@ export default function Dashboard({ user, onLogout }) {
                     <span style={{ color: '#fff', fontSize: '0.95rem', fontWeight: '600' }}>${fmtPrice(s.entryPrice)}</span>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '2px' }}>
-                        <span style={{ color: '#aaa', fontSize: '0.75rem' }}>Hedef</span>
-                        {s.entryPrice && s.targetPrice && <span style={{ color: '#4ade80', fontSize: '0.65rem', fontWeight: 'bold' }}>(+%{(Math.abs(s.targetPrice - s.entryPrice) / s.entryPrice * 100).toFixed(2)})</span>}
-                    </div>
+                    <span style={{ color: '#aaa', fontSize: '0.75rem', marginBottom: '2px' }}>Hedef</span>
                     <span style={{ color: '#4ade80', fontSize: '0.95rem', fontWeight: '600' }}>${fmtPrice(s.targetPrice)}</span>
+                    {s.entryPrice && s.targetPrice && <span style={{ color: '#4ade80', fontSize: '0.65rem', fontWeight: 'bold', marginTop: '2px' }}>(+%{(Math.abs(s.targetPrice - s.entryPrice) / s.entryPrice * 100).toFixed(2)})</span>}
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '2px' }}>
-                        <span style={{ color: '#aaa', fontSize: '0.75rem' }}>Stop Loss</span>
-                        {s.entryPrice && s.stopPrice && <span style={{ color: '#f87171', fontSize: '0.65rem', fontWeight: 'bold' }}>(-%{(Math.abs(s.stopPrice - s.entryPrice) / s.entryPrice * 100).toFixed(2)})</span>}
-                    </div>
+                    <span style={{ color: '#aaa', fontSize: '0.75rem', marginBottom: '2px' }}>Stop Loss</span>
                     <span style={{ color: '#f87171', fontSize: '0.95rem', fontWeight: '600' }}>${fmtPrice(s.stopPrice)}</span>
+                    {s.entryPrice && s.stopPrice && <span style={{ color: '#f87171', fontSize: '0.65rem', fontWeight: 'bold', marginTop: '2px' }}>(-%{(Math.abs(s.stopPrice - s.entryPrice) / s.entryPrice * 100).toFixed(2)})</span>}
                 </div>
             </div>
 
