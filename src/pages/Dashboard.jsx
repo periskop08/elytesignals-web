@@ -408,12 +408,14 @@ export default function Dashboard({ user, onLogout }) {
         console.warn("Bybit API error", e);
       }
 
-      // 2. Sonra Binance'den çek (FET gibi Bybit'te olmayanları tamamlar)
+      // 2. Sonra Binance'den çek (SADECE Bybit'te olmayanları tamamla, üzerine yazma! XMR gibi delist olanlar hataya sebep olur)
       try {
         const binanceRes = await axios.get('https://api.binance.com/api/v3/ticker/price');
         if (binanceRes.data && Array.isArray(binanceRes.data)) {
            binanceRes.data.forEach(t => {
-              prices[t.symbol] = parseFloat(t.price);
+              if (!prices[t.symbol]) {
+                  prices[t.symbol] = parseFloat(t.price);
+              }
            });
         }
       } catch (e) {
