@@ -394,11 +394,12 @@ export default function Dashboard({ user, onLogout }) {
 
   const fetchPrices = async () => {
     try {
-      const res = await axios.get('https://api.bybit.com/v5/market/tickers?category=linear');
-      if (res.data && res.data.result && res.data.result.list) {
+      const res = await axios.get('https://open-api.bingx.com/openApi/swap/v2/quote/ticker');
+      if (res.data && res.data.data) {
          const prices = {};
-         res.data.result.list.forEach(t => {
-            prices[t.symbol] = parseFloat(t.lastPrice);
+         res.data.data.forEach(t => {
+            const sym = t.symbol.replace('-', ''); // Convert 'FET-USDT' to 'FETUSDT'
+            prices[sym] = parseFloat(t.lastPrice);
          });
          setLivePrices(prices);
       }
