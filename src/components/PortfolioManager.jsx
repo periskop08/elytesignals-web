@@ -118,6 +118,15 @@ export default function PortfolioManager() {
     const totalPortfolioValue = baseCapital + totalPnlValue;
     const totalPnl = baseCapital > 0 ? parseFloat(((totalPnlValue / baseCapital) * 100).toFixed(2)) : 0;
 
+    const isNewAssetObj = (createdAt) => {
+        if (!createdAt) return false;
+        const assetDate = new Date(createdAt).getTime();
+        const now = new Date().getTime();
+        // If it was added to the DB in the last 48 hours, consider it a new discovery
+        const diffHours = (now - assetDate) / (1000 * 60 * 60);
+        return diffHours < 48; 
+    };
+
     return (
         <div style={{ padding: '20px', animation: 'fadeUp 0.4s ease-out', width: '100%' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
@@ -245,6 +254,12 @@ export default function PortfolioManager() {
                          onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'}
                          style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1.5fr 1.5fr 1.5fr', alignItems: 'center', background: 'rgba(255,255,255,0.02)', border: asset.type === 'ETF' ? '1px solid rgba(56, 189, 248, 0.2)' : '1px solid rgba(255,255,255,0.05)', padding: '16px', borderRadius: '16px', cursor: 'pointer', transition: 'all 0.2s', boxShadow: 'inset 0 0 20px rgba(0,0,0,0.1)', position: 'relative' }}
                     >
+                        {isNewAssetObj(asset.createdAt) && asset.allocatedPercentage === 5 && (
+                            <div style={{ position: 'absolute', top: '-12px', right: '40px', background: 'linear-gradient(90deg, #10b981, #3b82f6)', padding: '4px 12px', borderRadius: '12px', fontSize: '0.65rem', fontWeight: 'bold', color: '#fff', display: 'flex', alignItems: 'center', gap: '4px', boxShadow: '0 4px 10px rgba(16, 185, 129, 0.4)', zIndex: 10 }}>
+                                ✨ AI KEŞFİ (YENİ)
+                            </div>
+                        )}
+
                         {asset.insiderScore >= 80 && (
                             <div style={{ position: 'absolute', top: '-10px', left: '-10px', background: 'linear-gradient(90deg, #ef4444, #f97316)', padding: '4px 10px', borderRadius: '12px', fontSize: '0.65rem', fontWeight: 'bold', color: '#fff', display: 'flex', alignItems: 'center', gap: '4px', boxShadow: '0 4px 10px rgba(239, 68, 68, 0.5)', zIndex: 10 }}>
                                 <BellRing size={12} /> INSIDER
