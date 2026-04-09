@@ -734,6 +734,14 @@ export default function Dashboard({ user, onLogout }) {
 
   if(!user) return null;
 
+  // New York (ABD) Borsa Açık/Kapalı Durumu (TR saatinden bağımsız her zaman doğru çalışır)
+  const nyTime = new Date(new Date().toLocaleString("en-US", {timeZone: "America/New_York"}));
+  const day = nyTime.getDay();
+  const hours = nyTime.getHours();
+  const minutes = nyTime.getMinutes();
+  const totalMinutes = hours * 60 + minutes;
+  const isUSMarketOpen = day >= 1 && day <= 5 && totalMinutes >= (9 * 60 + 30) && totalMinutes < (16 * 60);
+
   return (
     <div className="dashboard-layout" style={{ position: 'relative' }}>
       
@@ -1039,7 +1047,14 @@ export default function Dashboard({ user, onLogout }) {
                                         <Briefcase size={24} color="#fff" />
                                     </div>
                                     <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                        <h3 style={{ margin: 0, fontSize: '1.2rem', color: '#fff' }}>Hedge Fund: Nasdaq Barometresi</h3>
+                                        <h3 style={{ margin: 0, fontSize: '1.2rem', color: '#fff', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            Hedge Fund: Nasdaq Barometresi
+                                            {isUSMarketOpen ? (
+                                                <span style={{ fontSize: '0.65rem', background: 'rgba(74, 222, 128, 0.2)', color: '#4ade80', padding: '2px 6px', borderRadius: '4px', letterSpacing: '0.5px' }}>🟢 AÇIK</span>
+                                            ) : (
+                                                <span style={{ fontSize: '0.65rem', background: 'rgba(248, 113, 113, 0.2)', color: '#f87171', padding: '2px 6px', borderRadius: '4px', letterSpacing: '0.5px' }}>🔴 KAPALI</span>
+                                            )}
+                                        </h3>
                                         <span style={{ color: riskData.appetite.includes('Off') ? '#ef4444' : '#10b981', fontWeight: 'bold' }}>{riskData.appetite}</span>
                                     </div>
                                 </div>
