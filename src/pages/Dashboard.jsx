@@ -894,8 +894,8 @@ export default function Dashboard({ user, onLogout }) {
                                                 {pt.createdAt ? new Date(pt.createdAt + 'Z').toLocaleString('tr-TR', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' }) : ''}
                                             </span>
                                         </div>
-                                        <div style={{ color: pt.status === 'WIN' ? '#4ade80' : '#f87171', fontWeight: 'bold', fontSize: '0.9rem', background: pt.status === 'WIN' ? 'rgba(74,222,128,0.15)' : 'rgba(248,113,113,0.15)', padding: '4px 10px', borderRadius: '8px' }}>
-                                            {pt.status === 'WIN' ? 'KAZANÇ (TP)' : 'KAYIP (SL)'} ({parseFloat(pt.calculatedPnl) > 0 ? '+' : ''}{pt.calculatedPnl}%)
+                                        <div style={{ color: pt.status === 'WIN' ? '#4ade80' : pt.status === 'BREAKEVEN' ? '#94a3b8' : '#f87171', fontWeight: 'bold', fontSize: '0.9rem', background: pt.status === 'WIN' ? 'rgba(74,222,128,0.15)' : pt.status === 'BREAKEVEN' ? 'rgba(148,163,184,0.15)' : 'rgba(248,113,113,0.15)', padding: '4px 10px', borderRadius: '8px' }}>
+                                            {pt.status === 'WIN' ? 'KAZANÇ (TP)' : pt.status === 'BREAKEVEN' ? 'BAŞABAŞ (BE)' : 'KAYIP (SL)'} ({parseFloat(pt.calculatedPnl) > 0 ? '+' : ''}{pt.calculatedPnl}%)
                                         </div>
                                     </div>
                                     
@@ -1383,6 +1383,21 @@ export default function Dashboard({ user, onLogout }) {
                             </div>
                             <h2 style={{ margin: '1rem 0 0.25rem 0', fontSize: '1.75rem', color: '#fff' }}>{stats.wins}</h2>
                             <p style={{ color: '#888', fontSize: '0.85rem', margin: 0 }}>Başarılı (TP)</p>
+                            <p style={{ color: '#666', fontSize: '0.7rem', marginTop: '4px' }}>Tıkla ve İncele</p>
+                        </div>
+                        <div 
+                            style={{
+                                flex: 1, minWidth: '150px', background: '#162336', padding: '1.5rem', borderRadius: '16px',
+                                border: '1px solid rgba(255,255,255,0.05)', textAlign: 'center', position: 'relative', cursor: 'pointer'
+                            }}
+                            onClick={() => loadHistoryData('BREAKEVEN')}
+                        >
+                            <Target color="#94a3b8" size={32} style={{ margin: '0 auto' }} />
+                            <div style={{ position: 'absolute', right: '1rem', top: '1rem', background: 'rgba(148, 163, 184, 0.15)', padding: '2px 8px', borderRadius: '6px' }}>
+                                <span style={{ color: '#94a3b8', fontSize: '0.75rem', fontWeight: 'bold' }}>0.0%</span>
+                            </div>
+                            <h2 style={{ margin: '1rem 0 0.25rem 0', fontSize: '1.75rem', color: '#fff' }}>{stats.breakevens || 0}</h2>
+                            <p style={{ color: '#888', fontSize: '0.85rem', margin: 0 }}>Başabaş (BE)</p>
                             <p style={{ color: '#666', fontSize: '0.7rem', marginTop: '4px' }}>Tıkla ve İncele</p>
                         </div>
                         <div 
