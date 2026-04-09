@@ -211,7 +211,7 @@ export default function Dashboard({ user, onLogout }) {
   let totalMarketPnl = 0;
   activeMainSignals.forEach(s => {
       const p = calculatePnl(s);
-      totalMarketPnl += (p * 3 / 100);
+      totalMarketPnl += (p * 10 / 100);
       if (p > 0) mainProfitCount++;
       else if (p < 0) mainLossCount++; 
   });
