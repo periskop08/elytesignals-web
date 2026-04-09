@@ -527,6 +527,24 @@ export default function Dashboard({ user, onLogout }) {
       }
   };
 
+  const terminateAdminSignal = async (e, signalId, currentPrice, currentPnl) => {
+      e.stopPropagation();
+      if (!window.confirm(`[ADMİN YETKİSİ] Bu sinyal tüm platformda genel geçmişe (Kâr/Zarar ile) işlenip kapatılacaktır, onaylıyor musunuz?`)) return;
+      try {
+          await axios.post('/api/signals/admin/close', {
+              telegramId: user.telegramId,
+              signalId,
+              currentPrice,
+              pnl: currentPnl
+          });
+          fetchSignals();
+          loadStats();
+      } catch (err) {
+          alert("Admin İşlem Hatası: " + (err.response?.data?.error || err.message));
+          console.error("Admin close error:", err);
+      }
+  };
+
   const renderTableHeader = () => (
       <div className="signal-row-header">
           <span>Varlık & Yön</span>
@@ -677,7 +695,7 @@ export default function Dashboard({ user, onLogout }) {
             </div>
 
             {/* Sütun 6: Aksiyon */}
-            <div className={`action-column-mobile ${isFavTab && s.status === 'ACTIVE' ? 'has-buttons' : ''}`}>
+            <div className={`action-column-mobile ${(isFavTab && s.status === 'ACTIVE') || (!isFavTab && user.isAdmin && s.status === 'ACTIVE') ? 'has-buttons' : ''}`}>
                 {isFavTab && s.status === 'ACTIVE' ? (
                     <div style={{ display: 'flex', gap: '8px' }}>
                         {userTrade && userTrade.status === 'ACTIVE' && (
@@ -695,6 +713,16 @@ export default function Dashboard({ user, onLogout }) {
                         >
                             İşlemi Sonlandır
                         </button>
+                    </div>
+                ) : !isFavTab && user.isAdmin && s.status === 'ACTIVE' ? (
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                        <button 
+                            onClick={(e) => terminateAdminSignal(e, s.id, currentPrice, pnl || 0)}
+                            style={{ background: pnl >= 0 ? 'rgba(74, 222, 128, 0.1)' : 'rgba(239, 68, 68, 0.1)', color: pnl >= 0 ? '#4ade80' : '#ef4444', border: `1px solid ${pnl >= 0 ? 'rgba(74, 222, 128, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`, padding: '4px 8px', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 'bold', cursor: 'pointer', transition: 'all 0.2s', whiteSpace: 'nowrap' }}
+                        >
+                            Admin Kapat
+                        </button>
+                        <Star color={isFav ? '#eab308' : '#555'} fill={isFav ? '#eab308' : 'none'} size={24} style={{cursor: 'pointer'}} onClick={(e) => { e.stopPropagation(); toggleFavorite(s); }} />
                     </div>
                 ) : (
                     <Star color={isFav ? '#eab308' : '#555'} fill={isFav ? '#eab308' : 'none'} size={24} style={{cursor: 'pointer'}} onClick={(e) => { e.stopPropagation(); toggleFavorite(s); }} />
