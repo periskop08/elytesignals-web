@@ -695,7 +695,7 @@ export default function Dashboard({ user, onLogout }) {
             </div>
 
             {/* Sütun 6: Aksiyon */}
-            <div className={`action-column-mobile ${(isFavTab && s.status === 'ACTIVE') || (!isFavTab && user.isAdmin && s.status === 'ACTIVE') ? 'has-buttons' : ''}`}>
+            <div className={`action-column-mobile ${(isFavTab && s.status === 'ACTIVE') || (!isFavTab && isAdmin && s.status === 'ACTIVE') ? 'has-buttons' : ''}`}>
                 {isFavTab && s.status === 'ACTIVE' ? (
                     <div style={{ display: 'flex', gap: '8px' }}>
                         {userTrade && userTrade.status === 'ACTIVE' && (
@@ -714,7 +714,7 @@ export default function Dashboard({ user, onLogout }) {
                             İşlemi Sonlandır
                         </button>
                     </div>
-                ) : !isFavTab && user.isAdmin && s.status === 'ACTIVE' ? (
+                ) : !isFavTab && isAdmin && s.status === 'ACTIVE' ? (
                     <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                         <button 
                             onClick={(e) => terminateAdminSignal(e, s.id, currentPrice, pnl || 0)}
