@@ -247,12 +247,26 @@ export default function PortfolioManager() {
 
                 {assets.length === 0 ? (
                     <div style={{ color: '#888', padding: '16px', textAlign: 'center', background: 'rgba(255,255,255,0.02)', borderRadius: '16px' }}>Varlık bulunamadı. Lütfen sisteme varlık ekleyin veya AI taramasını bekleyin.</div>
-                ) : assets.filter(a => a.allocatedPercentage > 0).map(asset => (
+                ) : assets.filter(a => a.allocatedPercentage > 0).map(asset => {
+                    const assetValue = baseCapital * ((asset.allocatedPercentage || 0) / 100);
+                    const pnlVal = assetValue * (-(asset.drawdown || 0) / 100);
+                    const isProfit = pnlVal >= 0;
+                    const pnlColor = isProfit ? '#4ade80' : '#f87171';
+                    const pnlText = isProfit ? `+$${pnlVal.toFixed(2)}` : `-$${Math.abs(pnlVal).toFixed(2)}`;
+                    const pnlPct = isProfit ? `+%${Math.abs(asset.drawdown || 0).toFixed(2)}` : `-%${Math.abs(asset.drawdown || 0).toFixed(2)}`;
+
+                    return (
                     <div key={asset.id} 
                          onClick={() => setSelectedAsset(asset)}
-                         onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.06)'}
-                         onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'}
-                         style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1.5fr 1.5fr 1.5fr', alignItems: 'center', background: 'rgba(255,255,255,0.02)', border: asset.type === 'ETF' ? '1px solid rgba(56, 189, 248, 0.2)' : '1px solid rgba(255,255,255,0.05)', padding: '16px', borderRadius: '16px', cursor: 'pointer', transition: 'all 0.2s', boxShadow: 'inset 0 0 20px rgba(0,0,0,0.1)', position: 'relative' }}
+                         onMouseEnter={(e) => {
+                             e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
+                             e.currentTarget.style.borderColor = isProfit ? 'rgba(74, 222, 128, 0.4)' : 'rgba(248, 113, 113, 0.4)';
+                         }}
+                         onMouseLeave={(e) => {
+                             e.currentTarget.style.background = 'rgba(255,255,255,0.02)';
+                             e.currentTarget.style.borderColor = asset.type === 'ETF' ? 'rgba(56, 189, 248, 0.1)' : 'rgba(255,255,255,0.05)';
+                         }}
+                         style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1.5fr 1.5fr 1.5fr', alignItems: 'center', background: 'rgba(255,255,255,0.02)', border: asset.type === 'ETF' ? '1px solid rgba(56, 189, 248, 0.1)' : '1px solid rgba(255,255,255,0.05)', padding: '16px', borderRadius: '16px', cursor: 'pointer', transition: 'all 0.2s', boxShadow: 'inset 0 0 20px rgba(0,0,0,0.1)', position: 'relative' }}
                     >
                         {isNewAssetObj(asset.createdAt) && asset.allocatedPercentage === 5 && (
                             <div style={{ position: 'absolute', top: '-12px', right: '40px', background: 'linear-gradient(90deg, #10b981, #3b82f6)', padding: '4px 12px', borderRadius: '12px', fontSize: '0.65rem', fontWeight: 'bold', color: '#fff', display: 'flex', alignItems: 'center', gap: '4px', boxShadow: '0 4px 10px rgba(16, 185, 129, 0.4)', zIndex: 10 }}>
@@ -295,16 +309,21 @@ export default function PortfolioManager() {
                             </div>
                         </div>
 
-                        {/* Column 4: Cost & Lot */}
                         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', background: 'rgba(0,0,0,0.2)', padding: '8px 16px', borderRadius: '20px' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px' }}>
-                                    <span style={{ color: '#aaa', fontSize: '0.8rem' }}>Maliyet:</span>
-                                    <span style={{ color: '#fff', fontWeight: 'bold', fontSize: '0.85rem' }}>${asset.averageCost.toFixed(2)}</span>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', background: 'rgba(0,0,0,0.2)', padding: '10px 16px', borderRadius: '20px', width: '140px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
+                                    <span style={{ color: '#aaa', fontSize: '0.75rem' }}>Maliyet:</span>
+                                    <span style={{ color: '#fff', fontWeight: 'bold', fontSize: '0.8rem' }}>${asset.averageCost.toFixed(2)}</span>
                                 </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px' }}>
-                                    <span style={{ color: '#aaa', fontSize: '0.8rem' }}>Adet (Lot):</span>
-                                    <span style={{ color: '#fff', fontWeight: 'bold', fontSize: '0.85rem' }}>{asset.quantity}</span>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '6px' }}>
+                                    <span style={{ color: '#aaa', fontSize: '0.75rem' }}>Adet:</span>
+                                    <span style={{ color: '#fff', fontWeight: 'bold', fontSize: '0.8rem' }}>{asset.quantity}</span>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px', alignItems: 'center', paddingTop: '2px' }}>
+                                    <span style={{ color: '#aaa', fontSize: '0.75rem' }}>P&L:</span>
+                                    <span style={{ color: pnlColor, fontSize: '0.85rem', fontWeight: 'bold', textShadow: `0 0 8px ${isProfit ? 'rgba(74, 222, 128, 0.4)' : 'rgba(248, 113, 113, 0.4)'}` }}>
+                                        {pnlText}
+                                    </span>
                                 </div>
                             </div>
                         </div>
@@ -321,7 +340,7 @@ export default function PortfolioManager() {
                             <span style={{ color: '#888', fontSize: '0.7rem' }}>Skor: <strong style={{ color: '#fff' }}>{asset.aiScore}</strong></span>
                         </div>
                     </div>
-                ))}
+                );})}
             </div>
 
             {/* ASSET DETAIL MODAL */}
@@ -361,12 +380,19 @@ export default function PortfolioManager() {
                                 </div>
                                 <div style={{ background: 'rgba(0,0,0,0.2)', padding: '16px', borderRadius: '16px' }}>
                                     <span style={{ color: '#888', fontSize: '0.9rem', display: 'block', marginBottom: '4px' }}>Anlık Kâr / Zarar</span>
-                                    <strong style={{ color: selectedAsset.drawdown > 0 ? '#ef4444' : '#4ade80', fontSize: '1.2rem', display: 'flex', flexDirection: 'column' }}>
-                                        <span>{selectedAsset.drawdown > 0 ? `-%${selectedAsset.drawdown.toFixed(2)}` : `+%${Math.abs(selectedAsset.drawdown || 0).toFixed(2)}`}</span>
-                                        <span style={{ fontSize: '0.9rem', color: '#aaa', marginTop: '4px' }}>
-                                            {selectedAsset.drawdown > 0 ? '-' : '+'}${ Math.abs( (1000 * (selectedAsset.allocatedPercentage / 100)) * ((selectedAsset.drawdown || 0) / 100) ).toFixed(2) }
-                                        </span>
-                                    </strong>
+                                    {(() => {
+                                        const modalAssetVal = baseCapital * ((selectedAsset.allocatedPercentage || 0) / 100);
+                                        const modalPnlVal = modalAssetVal * (-(selectedAsset.drawdown || 0) / 100);
+                                        const modalIsProfit = modalPnlVal >= 0;
+                                        return (
+                                            <strong style={{ color: modalIsProfit ? '#4ade80' : '#ef4444', fontSize: '1.2rem', display: 'flex', flexDirection: 'column' }}>
+                                                <span>{modalIsProfit ? `+$${modalPnlVal.toFixed(2)}` : `-$${Math.abs(modalPnlVal).toFixed(2)}`}</span>
+                                                <span style={{ fontSize: '0.9rem', color: modalIsProfit ? '#4ade80' : '#ef4444', marginTop: '4px', opacity: 0.8 }}>
+                                                    {modalIsProfit ? `+%${Math.abs(selectedAsset.drawdown || 0).toFixed(2)}` : `-%${Math.abs(selectedAsset.drawdown || 0).toFixed(2)}`} Oran
+                                                </span>
+                                            </strong>
+                                        );
+                                    })()}
                                 </div>
                                 <div style={{ background: 'rgba(0,0,0,0.2)', padding: '16px', borderRadius: '16px' }}>
                                     <span style={{ color: '#888', fontSize: '0.9rem', display: 'block', marginBottom: '4px' }}>FINAL AI GÜVENİ</span>
