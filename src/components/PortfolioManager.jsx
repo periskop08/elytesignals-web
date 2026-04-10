@@ -58,13 +58,13 @@ export default function PortfolioManager() {
     };
 
     const handleLiquidate = async (symbol) => {
-        if (!window.confirm(`${symbol} hissesinin tüm ağırlığını satıp doğrudan QQQ ETF'ine (Güvenli Liman) aktarmak istediğinize emin misiniz?`)) return;
+        if (!window.confirm(`${symbol} hissesinin tüm ağırlığını satıp doğrudan XAR ETF'ine (Güvenli Liman) aktarmak istediğinize emin misiniz?`)) return;
         
         try {
             await axios.post('/api/portfolio/liquidate', { symbol });
             setSelectedAsset(null);
             await fetchData();
-            alert(`${symbol} başarıyla satıldı ve ağırlığı QQQ'ya eklendi.`);
+            alert(`${symbol} başarıyla satıldı ve ağırlığı XAR'ya eklendi.`);
         } catch(e) {
             console.error(e);
             alert("Satış İşlemi Başarısız!");
@@ -401,7 +401,7 @@ export default function PortfolioManager() {
                             </div>
 
                             {/* Action Buttons Section */}
-                            {selectedAsset.symbol !== 'QQQ' && (
+                            {selectedAsset.symbol !== 'XAR' && (
                                 <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'flex-end' }}>
                                     <button 
                                         onClick={() => handleLiquidate(selectedAsset.symbol)}
@@ -424,7 +424,7 @@ export default function PortfolioManager() {
                                         onMouseOut={e => e.currentTarget.style.transform = 'scale(1)'}
                                     >
                                         <Zap size={20} />
-                                        Tamamını Sat ve QQQ'ya Aktar
+                                        Tamamını Sat ve XAR'a Aktar
                                     </button>
                                 </div>
                             )}
