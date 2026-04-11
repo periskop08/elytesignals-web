@@ -231,37 +231,6 @@ export default function PortfolioManager() {
                     </div>
                 </div>
 
-                {/* KANTAN.NEWS TERMINAL */}
-                <div style={{ background: 'rgba(30, 41, 59, 0.5)', border: '1px solid rgba(255, 255, 255, 0.05)', borderRadius: '24px', padding: '30px', backdropFilter: 'blur(10px)', display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden' }}>
-                    <div style={{ position: 'absolute', top: 0, right: 0, width: '10px', height: '10px', background: '#f43f5e', borderRadius: '50%', margin: '20px', animation: 'pulse 2s infinite' }}></div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-                        <div style={{ background: 'rgba(244, 63, 94, 0.1)', padding: '10px', borderRadius: '12px' }}>
-                            <Zap size={28} color="#f43f5e" />
-                        </div>
-                        <h3 style={{ margin: 0, fontSize: '1.2rem', color: '#fff' }}>Kantan.News Terminali</h3>
-                    </div>
-                    
-                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '12px', overflowY: 'auto', maxHeight: '150px', paddingRight: '4px' }} className="news-scroll">
-                        {newsItems.length === 0 ? (
-                            <span style={{ color: '#888' }}>Piyasada yeni istihbarat taranıyor...</span>
-                        ) : newsItems.map((n, idx) => (
-                            <div key={idx} style={{ background: 'rgba(0,0,0,0.3)', padding: '12px', borderRadius: '12px', borderLeft: `3px solid ${n.sentimentScore > 65 ? '#4ade80' : (n.sentimentScore < 45 ? '#f43f5e' : '#facc15')}` }}>
-                                <div style={{ display: 'flex', gap: '8px', marginBottom: '4px', alignItems: 'center', flexWrap: 'wrap' }}>
-                                    {n.relatedSymbols && n.relatedSymbols.split(',').map((sym, i) => (
-                                        <span key={i} style={{ background: '#3b82f6', color: '#fff', fontSize: '0.65rem', padding: '2px 6px', borderRadius: '8px', fontWeight: 'bold' }}>
-                                            {sym.trim()}
-                                        </span>
-                                    ))}
-                                    <span style={{ color: '#64748b', fontSize: '0.7rem', marginLeft: 'auto' }}>
-                                        {new Date(n.createdAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
-                                    </span>
-                                </div>
-                                <strong style={{ color: '#fff', fontSize: '0.85rem', display: 'block', marginBottom: '4px' }}>{n.title}</strong>
-                                <p style={{ color: '#94a3b8', fontSize: '0.75rem', margin: 0, lineHeight: '1.4' }}>{n.summary}</p>
-                            </div>
-                        ))}
-                    </div>
-                </div>
             </div>
 
             {/* HOLDINGS GRID */}

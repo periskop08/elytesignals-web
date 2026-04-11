@@ -1532,10 +1532,14 @@ export default function Dashboard({ user, onLogout }) {
 
         {activeTab === 'news' && (
           <div className="news-container" style={{ padding: '1rem', width: '100%', maxWidth: '1000px', margin: '0 auto' }}>
-            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1.5rem', gap: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1.5rem', gap: '12px', position: 'relative' }}>
                 <Newspaper color="#38bdf8" size={32} />
-                <h2 style={{ fontSize: '1.8rem', margin: 0, color: '#fff' }}>Hisse ve Kripto İstihbarat Terminali</h2>
+                <h2 style={{ fontSize: '1.8rem', margin: 0, color: '#fff', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    Hisse ve Kripto İstihbarat Terminali
+                    <div style={{ width: '12px', height: '12px', background: '#f43f5e', borderRadius: '50%', animation: 'pulse 2s infinite' }}></div>
+                </h2>
             </div>
+
             
             {dashboardNewsLoading ? (
                 <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '300px' }}>
