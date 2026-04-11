@@ -15,13 +15,13 @@ const renderMarkdown = (text) => {
         if (line.startsWith('### ')) {
             return <h3 key={i} style={{ color: '#60a5fa', margin: '16px 0 8px 0', fontSize: '1.1rem' }} dangerouslySetInnerHTML={{ __html: formattedLine.replace('### ', '') }} />;
         } else if (line.trim().startsWith('- ')) {
-            return <li key={i} style={{ marginLeft: '16px', marginBottom: '6px', lineHeight: '1.6', color: '#cbd5e1' }} dangerouslySetInnerHTML={{ __html: formattedLine.replace('- ', '') }} />;
+            return <li key={i} style={{ marginLeft: '16px', marginBottom: '8px', lineHeight: '1.8', color: '#cbd5e1' }} dangerouslySetInnerHTML={{ __html: formattedLine.replace('- ', '') }} />;
         } else if (line.match(/^\d+\)/)) {
             return <h4 key={i} style={{ color: '#94a3b8', margin: '14px 0 6px 0', fontSize: '1.05rem', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '4px' }} dangerouslySetInnerHTML={{ __html: formattedLine }} />;
         } else if (line.trim() === '') {
             return <br key={i} />;
         } else {
-            return <div key={i} style={{ margin: '6px 0', lineHeight: '1.6', color: '#cbd5e1' }} dangerouslySetInnerHTML={{ __html: formattedLine }} />;
+            return <div key={i} style={{ margin: '8px 0', lineHeight: '1.8', color: '#cbd5e1' }} dangerouslySetInnerHTML={{ __html: formattedLine }} />;
         }
     });
 };
@@ -1621,7 +1621,7 @@ export default function Dashboard({ user, onLogout }) {
                         </h2>
                         
                         <div style={{ background: 'rgba(0,0,0,0.2)', padding: '16px', borderRadius: '12px', marginBottom: '24px' }}>
-                            <p style={{ color: '#cbd5e1', lineHeight: '1.6', margin: 0, fontSize: '0.95rem' }}>
+                            <p style={{ color: '#cbd5e1', lineHeight: '1.8', margin: 0, fontSize: '0.95rem', whiteSpace: 'pre-wrap' }}>
                                 {selectedDashboardNews.content}
                             </p>
                         </div>
