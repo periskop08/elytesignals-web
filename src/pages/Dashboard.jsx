@@ -3,7 +3,7 @@ import axios from 'axios';
 import { 
   Activity, Star, Clock, PieChart, Home, Flame, Map, Wallet,
   Send, Bot, Target, AlertTriangle, ShieldCheck, 
-  TrendingUp, TrendingDown, RefreshCcw, LogOut, Zap, ArrowLeft, MessageSquare, X, Rocket, History, Flag, Briefcase, ThumbsUp
+  TrendingUp, TrendingDown, RefreshCcw, LogOut, Zap, ArrowLeft, MessageSquare, X, Rocket, History, Flag, Briefcase, ThumbsUp, Newspaper
 } from 'lucide-react';
 
 import PortfolioManager from '../components/PortfolioManager';
@@ -60,6 +60,13 @@ export default function Dashboard({ user, onLogout }) {
   const [isAutoPoking, setIsAutoPoking] = useState(false);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [showVipModal, setShowVipModal] = useState(false);
+
+  // Kantan News States
+  const [dashboardNews, setDashboardNews] = useState([]);
+  const [dashboardNewsLoading, setDashboardNewsLoading] = useState(false);
+  const [selectedDashboardNews, setSelectedDashboardNews] = useState(null);
+  const [newsAnalysisLoading, setNewsAnalysisLoading] = useState(false);
+  const [newsAnalysisReport, setNewsAnalysisReport] = useState("");
 
   const handleTabClick = (tabName) => {
       // Çift tıkla/Aynı sekmeye basıldığında tepeye kaydır (Mobil App Davranışı)
@@ -328,6 +335,36 @@ export default function Dashboard({ user, onLogout }) {
               console.error("History fetch error:", err);
               setHistoryLoading(false);
           });
+  };
+
+  const loadNewsData = () => {
+      setActiveTab('news');
+      setDashboardNewsLoading(true);
+      axios.get('/api/news')
+          .then(res => {
+              setDashboardNews(res.data);
+              setDashboardNewsLoading(false);
+          })
+          .catch(err => {
+              console.error("News fetch error:", err);
+              setDashboardNewsLoading(false);
+          });
+  };
+
+  const fetchNewsAnalysis = async (newsId) => {
+      setNewsAnalysisLoading(true);
+      setNewsAnalysisReport("");
+      try {
+          const res = await axios.post('/api/news/analyze', { newsId });
+          if (res.data && res.data.report) {
+              setNewsAnalysisReport(res.data.report);
+          }
+      } catch (err) {
+          console.error("News analysis error:", err);
+          setNewsAnalysisReport("AI analizi sırasında bir hata yakalandı. Sunucu müsait olmayabilir.");
+      } finally {
+          setNewsAnalysisLoading(false);
+      }
   };
 
   useEffect(() => {
@@ -806,6 +843,10 @@ export default function Dashboard({ user, onLogout }) {
             <div className={`sidebar-nav-item ${activeTab === 'stats' ? 'active' : ''}`} onClick={() => handleTabClick('stats')}>
                <PieChart size={20} />
                <span>İstatistikler</span>
+            </div>
+            <div className={`sidebar-nav-item ${activeTab === 'news' ? 'active' : ''}`} onClick={loadNewsData}>
+               <Newspaper size={20} />
+               <span>Hisse Haberleri</span>
             </div>
         </div>
 
@@ -1486,6 +1527,121 @@ export default function Dashboard({ user, onLogout }) {
                     </div>
                  </>
              )}
+          </div>
+        )}
+
+        {activeTab === 'news' && (
+          <div className="news-container" style={{ padding: '1rem', width: '100%', maxWidth: '1000px', margin: '0 auto' }}>
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1.5rem', gap: '12px' }}>
+                <Newspaper color="#38bdf8" size={32} />
+                <h2 style={{ fontSize: '1.8rem', margin: 0, color: '#fff' }}>Hisse ve Kripto İstihbarat Terminali</h2>
+            </div>
+            
+            {dashboardNewsLoading ? (
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '300px' }}>
+                    <span style={{ color: '#38bdf8' }}>Haber Akışı Yükleniyor...</span>
+                </div>
+            ) : dashboardNews.length === 0 ? (
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '200px', flexDirection: 'column' }}>
+                    <Newspaper size={48} color="#555" style={{ marginBottom: '1rem' }} />
+                    <span style={{ color: '#888' }}>Şu an için önemli bir istihbarat bulunamadı.</span>
+                </div>
+            ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }}>
+                    {dashboardNews.map(item => (
+                        <div 
+                            key={item.id} 
+                            onClick={() => {
+                                setSelectedDashboardNews(item);
+                                fetchNewsAnalysis(item.id);
+                            }}
+                            className="signal-card-row" 
+                            style={{ 
+                                cursor: 'pointer', 
+                                border: `1px solid ${item.sentimentScore > 0 ? 'rgba(74, 222, 128, 0.3)' : item.sentimentScore < 0 ? 'rgba(248, 113, 113, 0.3)' : 'rgba(234, 179, 8, 0.3)'}`,
+                                background: 'rgba(22, 35, 54, 0.4)',
+                                display: 'grid',
+                                gridTemplateColumns: 'minmax(200px, 1fr) auto',
+                                gap: '16px',
+                                padding: '16px 20px',
+                                alignItems: 'center'
+                            }}
+                        >
+                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                <span style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#fff', marginBottom: '8px', lineHeight: '1.4' }}>{item.title}</span>
+                                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                    {item.relatedSymbols && item.relatedSymbols.split(',').map(sym => sym.trim()).map(rticker => (
+                                        <span key={rticker} style={{ background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', padding: '2px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold' }}>{rticker}</span>
+                                    ))}
+                                </div>
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' }}>
+                                <span style={{ color: '#888', fontSize: '0.8rem', marginBottom: '8px' }}>{new Date(item.createdAt + 'Z').toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                                <div style={{ 
+                                    background: item.sentimentScore > 0 ? 'rgba(74, 222, 128, 0.15)' : item.sentimentScore < 0 ? 'rgba(248, 113, 113, 0.15)' : 'rgba(234, 179, 8, 0.15)',
+                                    color: item.sentimentScore > 0 ? '#4ade80' : item.sentimentScore < 0 ? '#f87171' : '#eab308',
+                                    padding: '4px 12px',
+                                    borderRadius: '6px',
+                                    fontWeight: 'bold',
+                                    fontSize: '0.85rem'
+                                }}>
+                                    {item.sentimentScore > 0 ? 'Pozitif Etki' : item.sentimentScore < 0 ? 'Negatif Etki' : 'Nötr'}
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+            
+            {/* AI News Modal */}
+            {selectedDashboardNews && (
+                <div style={{
+                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                    background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)',
+                    display: 'flex', justifyContent: 'center', alignItems: 'center',
+                    zIndex: 9999, padding: '20px'
+                }} onClick={() => { setSelectedDashboardNews(null); setNewsAnalysisReport(""); }}>
+                    <div style={{
+                        background: '#1e293b', border: '1px solid rgba(56, 189, 248, 0.3)',
+                        borderRadius: '20px', width: '100%', maxWidth: '800px', maxHeight: '90vh',
+                        overflowY: 'auto', padding: '24px', position: 'relative', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+                    }} onClick={e => e.stopPropagation()}>
+                        <button onClick={() => { setSelectedDashboardNews(null); setNewsAnalysisReport(""); }} style={{
+                            position: 'absolute', top: '24px', right: '24px', background: 'rgba(255,255,255,0.05)', border: 'none', color: '#fff', cursor: 'pointer', padding: '8px', borderRadius: '8px'
+                        }}>
+                            <X size={20} />
+                        </button>
+                        
+                        <h2 style={{ fontSize: '1.4rem', fontWeight: 'bold', color: '#fff', marginBottom: '16px', paddingRight: '40px', lineHeight: '1.4' }}>
+                            {selectedDashboardNews.title}
+                        </h2>
+                        
+                        <div style={{ background: 'rgba(0,0,0,0.2)', padding: '16px', borderRadius: '12px', marginBottom: '24px' }}>
+                            <p style={{ color: '#cbd5e1', lineHeight: '1.6', margin: 0, fontSize: '0.95rem' }}>
+                                {selectedDashboardNews.content}
+                            </p>
+                        </div>
+                        
+                        <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#38bdf8', marginBottom: '16px', borderBottom: '1px solid rgba(56, 189, 248, 0.1)', paddingBottom: '12px' }}>
+                            <Bot size={24} /> Hamdi Bey Yapay Zeka Adli Raporu
+                        </h3>
+                        
+                        {newsAnalysisLoading ? (
+                            <div style={{ padding: '2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px' }}>
+                                <div className="blink-speed-1" style={{ width: '50px', height: '50px', borderRadius: '50%', border: '3px solid #38bdf8', borderTopColor: 'transparent', animation: 'spin 1s linear infinite' }}></div>
+                                <p style={{ color: '#38bdf8', fontWeight: 'bold' }}>Hamdi Bey istihbaratı inceliyor...</p>
+                            </div>
+                        ) : (
+                            <div style={{ background: 'rgba(15, 23, 42, 0.5)', padding: '20px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                {renderMarkdown(newsAnalysisReport)}
+                            </div>
+                        )}
+                        <style dangerouslySetInnerHTML={{__html: `
+                            @keyframes spin { 100% { transform: rotate(360deg); } }
+                        `}} />
+                    </div>
+                </div>
+            )}
           </div>
         )}
 
