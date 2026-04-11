@@ -1562,7 +1562,7 @@ export default function Dashboard({ user, onLogout }) {
                             className="signal-card-row" 
                             style={{ 
                                 cursor: 'pointer', 
-                                border: `1px solid ${item.sentimentScore > 0 ? 'rgba(74, 222, 128, 0.3)' : item.sentimentScore < 0 ? 'rgba(248, 113, 113, 0.3)' : 'rgba(234, 179, 8, 0.3)'}`,
+                                border: `1px solid ${item.sentimentScore > 55 ? 'rgba(74, 222, 128, 0.3)' : item.sentimentScore < 45 ? 'rgba(248, 113, 113, 0.3)' : 'rgba(234, 179, 8, 0.3)'}`,
                                 background: 'rgba(22, 35, 54, 0.4)',
                                 display: 'grid',
                                 gridTemplateColumns: 'minmax(200px, 1fr) auto',
@@ -1582,14 +1582,14 @@ export default function Dashboard({ user, onLogout }) {
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' }}>
                                 <span style={{ color: '#888', fontSize: '0.8rem', marginBottom: '8px' }}>{new Date(item.createdAt + 'Z').toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
                                 <div style={{ 
-                                    background: item.sentimentScore > 0 ? 'rgba(74, 222, 128, 0.15)' : item.sentimentScore < 0 ? 'rgba(248, 113, 113, 0.15)' : 'rgba(234, 179, 8, 0.15)',
-                                    color: item.sentimentScore > 0 ? '#4ade80' : item.sentimentScore < 0 ? '#f87171' : '#eab308',
+                                    background: item.sentimentScore > 55 ? 'rgba(74, 222, 128, 0.15)' : item.sentimentScore < 45 ? 'rgba(248, 113, 113, 0.15)' : 'rgba(234, 179, 8, 0.15)',
+                                    color: item.sentimentScore > 55 ? '#4ade80' : item.sentimentScore < 45 ? '#f87171' : '#eab308',
                                     padding: '4px 12px',
                                     borderRadius: '6px',
                                     fontWeight: 'bold',
                                     fontSize: '0.85rem'
                                 }}>
-                                    {item.sentimentScore > 0 ? 'Pozitif Etki' : item.sentimentScore < 0 ? 'Negatif Etki' : 'Nötr'}
+                                    {item.sentimentScore > 55 ? 'Pozitif Etki' : item.sentimentScore < 45 ? 'Negatif Etki' : 'Nötr'}
                                 </div>
                             </div>
                         </div>
