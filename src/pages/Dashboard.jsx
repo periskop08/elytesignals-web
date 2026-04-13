@@ -1580,7 +1580,9 @@ export default function Dashboard({ user, onLogout }) {
                                 </div>
                             </div>
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' }}>
-                                <span style={{ color: '#888', fontSize: '0.8rem', marginBottom: '8px' }}>{new Date(item.createdAt + 'Z').toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                                <span style={{ color: '#888', fontSize: '0.8rem', marginBottom: '8px' }}>
+                                    {new Date(item.createdAt + 'Z').toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' })} • {new Date(item.createdAt + 'Z').toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                </span>
                                 <div style={{ 
                                     background: item.sentimentScore > 55 ? 'rgba(74, 222, 128, 0.15)' : item.sentimentScore < 45 ? 'rgba(248, 113, 113, 0.15)' : 'rgba(234, 179, 8, 0.15)',
                                     color: item.sentimentScore > 55 ? '#4ade80' : item.sentimentScore < 45 ? '#f87171' : '#eab308',
