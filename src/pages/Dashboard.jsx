@@ -1319,6 +1319,13 @@ export default function Dashboard({ user, onLogout }) {
                        <AlertTriangle size={16} color="#f87171" />
                        <span style={{ color: '#fff', fontWeight: '700', fontSize: '0.9rem' }}>{mainLossCount} Zarar</span>
                    </div>
+
+                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(217, 70, 239, 0.05)', backdropFilter: 'blur(10px)', padding: '8px 16px', borderRadius: '20px', border: '1px solid rgba(217, 70, 239, 0.3)', whiteSpace: 'nowrap' }}>
+                       <Zap size={16} color="#d946ef" />
+                       <span style={{ color: '#fff', fontWeight: '700', fontSize: '0.9rem' }}>
+                           Baraj: {macroData?.btcTrend?.includes('BULL') || macroData?.btcTrend?.includes('BEAR') ? '50 (Trend)' : '60 (Yatay)'}
+                       </span>
+                   </div>
                 </div>
              </div>
             
