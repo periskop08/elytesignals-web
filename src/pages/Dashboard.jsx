@@ -1323,7 +1323,7 @@ export default function Dashboard({ user, onLogout }) {
                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(217, 70, 239, 0.05)', backdropFilter: 'blur(10px)', padding: '8px 16px', borderRadius: '20px', border: '1px solid rgba(217, 70, 239, 0.3)', whiteSpace: 'nowrap' }}>
                        <Zap size={16} color="#d946ef" />
                        <span style={{ color: '#fff', fontWeight: '700', fontSize: '0.9rem' }}>
-                           Motor: {macroData?.btcTrend?.includes('BULL') || macroData?.btcTrend?.includes('BEAR') ? 'VOLUME (Hacim)' : 'ALPHA (Defans)'}
+                           Motor: {macroData?.btcTrend?.includes('BULL') || macroData?.btcTrend?.includes('BEAR') ? 'VOLUME' : 'ALPHA'}
                        </span>
                    </div>
                 </div>
