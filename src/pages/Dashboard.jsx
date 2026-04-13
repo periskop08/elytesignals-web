@@ -68,6 +68,9 @@ export default function Dashboard({ user, onLogout }) {
   const [newsAnalysisLoading, setNewsAnalysisLoading] = useState(false);
   const [newsAnalysisReport, setNewsAnalysisReport] = useState("");
 
+  const [shadowStats, setShadowStats] = useState(null);
+  const [shadowLoading, setShadowLoading] = useState(false);
+
   const handleTabClick = (tabName) => {
       // Çift tıkla/Aynı sekmeye basıldığında tepeye kaydır (Mobil App Davranışı)
       if (activeTab === tabName && !selectedSignal) {
@@ -348,6 +351,20 @@ export default function Dashboard({ user, onLogout }) {
           .catch(err => {
               console.error("News fetch error:", err);
               setDashboardNewsLoading(false);
+          });
+  };
+
+  const loadShadowData = () => {
+      setActiveTab('shadow');
+      setShadowLoading(true);
+      axios.get('/api/shadow-stats')
+          .then(res => {
+              setShadowStats(res.data);
+              setShadowLoading(false);
+          })
+          .catch(err => {
+              console.error("Shadow stats fetch error:", err);
+              setShadowLoading(false);
           });
   };
 
@@ -1649,6 +1666,55 @@ export default function Dashboard({ user, onLogout }) {
                 </div>
             )}
           </div>
+        )}
+
+        {activeTab === 'shadow' && (
+            <div className="stats-tab-content">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+                    <ShieldCheck size={28} color="#a855f7" />
+                    <h2 style={{ margin: 0, color: '#fff', fontSize: '1.4rem' }}>Gölge Ajan Analizi (Danışman Modu)</h2>
+                </div>
+                {shadowLoading || !shadowStats ? (
+                    <div style={{ textAlign: 'center', padding: '40px', color: '#888' }}>Analiz yükleniyor...</div>
+                ) : (
+                    <div className="glass-panel" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                        <p style={{ color: '#cbd5e1', fontSize: '0.95rem', lineHeight: '1.6' }}>
+                            Yapay zekanın <strong>Danışman</strong> modunda puanını kırdığı (Soft Veto) veya geçmişte tamamen engellediği yatırımların arka plan PnL başarısı. Eğer engellenen işlemler kâra gidiyorsa (False Negative), sistem fazla korumacı demektir.
+                        </p>
+                        
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '16px' }}>
+                            <div className="stat-box" style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '16px', borderRadius: '12px', textAlign: 'center' }}>
+                                <div style={{ fontSize: '0.85rem', color: '#888', marginBottom: '8px' }}>Puanı Kırılan Toplam</div>
+                                <div style={{ fontSize: '1.8rem', fontWeight: 'bold', color: '#fff' }}>{shadowStats.totalAssessed}</div>
+                            </div>
+                            <div className="stat-box" style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', padding: '16px', borderRadius: '12px', textAlign: 'center' }}>
+                                <div style={{ fontSize: '0.85rem', color: '#f87171', marginBottom: '8px' }}>İyi ki Puanı Kırılmış (Zarar Edecekti)</div>
+                                <div style={{ fontSize: '1.8rem', fontWeight: 'bold', color: '#f87171' }}>{shadowStats.wouldLoss}</div>
+                            </div>
+                            <div className="stat-box" style={{ background: 'rgba(74, 222, 128, 0.1)', border: '1px solid rgba(74, 222, 128, 0.2)', padding: '16px', borderRadius: '12px', textAlign: 'center' }}>
+                                <div style={{ fontSize: '0.85rem', color: '#4ade80', marginBottom: '8px' }}>Puanı Kırıldı ama Kâr Edecekti ⚠️</div>
+                                <div style={{ fontSize: '1.8rem', fontWeight: 'bold', color: '#4ade80' }}>{shadowStats.wouldWin}</div>
+                            </div>
+                        </div>
+
+                        {shadowStats.falseNegatives && shadowStats.falseNegatives.length > 0 && (
+                            <div style={{ marginTop: '20px' }}>
+                                <h3 style={{ color: '#facc15', fontSize: '1.1rem', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <AlertTriangle size={18} color="#facc15" /> En Çok Fırsat Kaçırtan Dersler (False Negative)
+                                </h3>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                    {shadowStats.falseNegatives.map((fn, idx) => (
+                                        <div key={idx} style={{ background: 'rgba(0,0,0,0.2)', padding: '12px', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <span style={{ color: '#fff', fontWeight: 'bold' }}>{fn.symbol}</span>
+                                            <span style={{ color: '#888', fontSize: '0.85rem' }}>Ders ID: <strong style={{ color: '#38bdf8' }}>{fn.lessonId}</strong></span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
         )}
 
         {activeTab === 'history' && (
