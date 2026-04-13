@@ -272,7 +272,7 @@ export default function PortfolioManager() {
                          }}
                          style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1.5fr 1.5fr 1.5fr', alignItems: 'center', background: 'rgba(255,255,255,0.02)', border: asset.type === 'ETF' ? '1px solid rgba(56, 189, 248, 0.1)' : '1px solid rgba(255,255,255,0.05)', padding: '16px', borderRadius: '16px', cursor: 'pointer', transition: 'all 0.2s', boxShadow: 'inset 0 0 20px rgba(0,0,0,0.1)', position: 'relative' }}
                     >
-                        {isNewAssetObj(asset.createdAt) && asset.allocatedPercentage === 5 && (
+                        {isNewAssetObj(asset.createdAt + 'Z') && (
                             <div style={{ position: 'absolute', top: '-12px', right: '40px', background: 'linear-gradient(90deg, #10b981, #3b82f6)', padding: '4px 12px', borderRadius: '12px', fontSize: '0.65rem', fontWeight: 'bold', color: '#fff', display: 'flex', alignItems: 'center', gap: '4px', boxShadow: '0 4px 10px rgba(16, 185, 129, 0.4)', zIndex: 10 }}>
                                 ✨ AI KEŞFİ (YENİ)
                             </div>
