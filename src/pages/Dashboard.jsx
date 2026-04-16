@@ -251,8 +251,8 @@ export default function Dashboard({ user, onLogout }) {
     axios.get(`/api/macro?ts=${Date.now()}`).then(res => setMacroData(res.data)).catch(console.error);
     axios.get(`/api/macro-risk?ts=${Date.now()}`).then(res => setRiskData(res.data)).catch(console.error);
 
+    const signalInterval = setInterval(fetchSignals, 10000);
     const interval = setInterval(() => {
-        fetchSignals();
         axios.get(`/api/macro?ts=${Date.now()}`).then(res => setMacroData(res.data)).catch(console.error);
         axios.get(`/api/macro-risk?ts=${Date.now()}`).then(res => setRiskData(res.data)).catch(console.error);
         if (user && user.telegramId) {
@@ -267,6 +267,7 @@ export default function Dashboard({ user, onLogout }) {
     }, 60000);
     const priceInterval = setInterval(fetchPrices, 5000);
     return () => {
+        clearInterval(signalInterval);
         clearInterval(interval);
         clearInterval(priceInterval);
     };
