@@ -1319,12 +1319,16 @@ export default function Dashboard({ user, onLogout }) {
                        <span style={{ color: '#fff', fontWeight: '700', fontSize: '0.9rem' }}>{mainShorts} SHORT</span>
                    </div>
 
-                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(74, 222, 128, 0.05)', backdropFilter: 'blur(10px)', padding: '8px 16px', borderRadius: '20px', border: '1px solid rgba(74, 222, 128, 0.1)', whiteSpace: 'nowrap' }}>
+                   <div 
+                       onClick={() => setDirectionFilter(directionFilter === 'PROFIT' ? 'ALL' : 'PROFIT')}
+                       style={{ display: 'flex', alignItems: 'center', gap: '6px', background: directionFilter === 'PROFIT' ? 'rgba(74, 222, 128, 0.25)' : 'rgba(74, 222, 128, 0.05)', backdropFilter: 'blur(10px)', padding: '8px 16px', borderRadius: '20px', border: directionFilter === 'PROFIT' ? '1px solid rgba(74, 222, 128, 0.5)' : '1px solid rgba(74, 222, 128, 0.1)', whiteSpace: 'nowrap', cursor: 'pointer', transition: 'all 0.2s' }}>
                        <Target size={16} color="#4ade80" />
                        <span style={{ color: '#fff', fontWeight: '700', fontSize: '0.9rem' }}>{mainProfitCount} Kâr</span>
                    </div>
 
-                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(248, 113, 113, 0.05)', backdropFilter: 'blur(10px)', padding: '8px 16px', borderRadius: '20px', border: '1px solid rgba(248, 113, 113, 0.1)', whiteSpace: 'nowrap' }}>
+                   <div 
+                       onClick={() => setDirectionFilter(directionFilter === 'LOSS' ? 'ALL' : 'LOSS')}
+                       style={{ display: 'flex', alignItems: 'center', gap: '6px', background: directionFilter === 'LOSS' ? 'rgba(248, 113, 113, 0.25)' : 'rgba(248, 113, 113, 0.05)', backdropFilter: 'blur(10px)', padding: '8px 16px', borderRadius: '20px', border: directionFilter === 'LOSS' ? '1px solid rgba(248, 113, 113, 0.5)' : '1px solid rgba(248, 113, 113, 0.1)', whiteSpace: 'nowrap', cursor: 'pointer', transition: 'all 0.2s' }}>
                        <AlertTriangle size={16} color="#f87171" />
                        <span style={{ color: '#fff', fontWeight: '700', fontSize: '0.9rem' }}>{mainLossCount} Zarar</span>
                    </div>
@@ -1341,13 +1345,27 @@ export default function Dashboard({ user, onLogout }) {
             ) : (
                 <div className="signals-list">
                     {renderTableHeader()}
-                    {activeMainSignals.filter(s => directionFilter === 'ALL' || s.type === directionFilter).length === 0 ? (
+                    {activeMainSignals.filter(s => {
+                        if (directionFilter === 'ALL') return true;
+                        if (directionFilter === 'LONG') return s.type === 'LONG';
+                        if (directionFilter === 'SHORT') return s.type === 'SHORT';
+                        if (directionFilter === 'PROFIT') return calculatePnl(s) > 0;
+                        if (directionFilter === 'LOSS') return calculatePnl(s) < 0;
+                        return true;
+                    }).length === 0 ? (
                         <div className="glass" style={{ padding: '3rem', textAlign: 'center', gridColumn: '1 / -1', borderRadius: '20px' }}>
                             <Target size={40} color="#888" style={{ marginBottom: '1rem' }} />
                             <h3 style={{ color: '#aaa', marginBottom: '0.5rem' }}>Filtrenize Uygun Fırsat Yok</h3>
                             <p style={{ color: '#666' }}>Şu an filtrelediğiniz yönde uygun bir sinyal bulunamadı.</p>
                         </div>
-                    ) : activeMainSignals.filter(s => directionFilter === 'ALL' || s.type === directionFilter).map(s => renderSignalCard(s, false))}
+                    ) : activeMainSignals.filter(s => {
+                        if (directionFilter === 'ALL') return true;
+                        if (directionFilter === 'LONG') return s.type === 'LONG';
+                        if (directionFilter === 'SHORT') return s.type === 'SHORT';
+                        if (directionFilter === 'PROFIT') return calculatePnl(s) > 0;
+                        if (directionFilter === 'LOSS') return calculatePnl(s) < 0;
+                        return true;
+                    }).map(s => renderSignalCard(s, false))}
                 </div>
             )}
           </>
