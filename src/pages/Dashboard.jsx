@@ -38,6 +38,7 @@ export default function Dashboard({ user, onLogout }) {
   const [riskData, setRiskData] = useState(null);
   const [selectedStock, setSelectedStock] = useState(null);
   const [categoryFilter, setCategoryFilter] = useState('ALL');
+  const [directionFilter, setDirectionFilter] = useState('ALL'); // LONG, SHORT, ALL
   const [statsLoading, setStatsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('home');
   const [favorites, setFavorites] = useState([]);
@@ -1302,18 +1303,24 @@ export default function Dashboard({ user, onLogout }) {
                 <div className="stats-scroll-container" style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '12px', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                    <style>{`.stats-scroll-container::-webkit-scrollbar { display: none; }`}</style>
                    
-                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(30, 41, 59, 0.6)', backdropFilter: 'blur(10px)', padding: '8px 16px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)', whiteSpace: 'nowrap' }}>
+                   <div 
+                       onClick={() => setDirectionFilter('ALL')}
+                       style={{ display: 'flex', alignItems: 'center', gap: '6px', background: directionFilter === 'ALL' ? 'rgba(30, 41, 59, 1)' : 'rgba(30, 41, 59, 0.6)', backdropFilter: 'blur(10px)', padding: '8px 16px', borderRadius: '20px', border: directionFilter === 'ALL' ? '1px solid rgba(255,255,255,0.3)' : '1px solid rgba(255,255,255,0.05)', whiteSpace: 'nowrap', cursor: 'pointer', transition: 'all 0.2s' }}>
                        <Activity size={16} color="#888" />
                        <span style={{ color: '#888', fontWeight: '500', fontSize: '0.85rem' }}>Aktif:</span> 
                        <span style={{ color: '#fff', fontWeight: '800', fontSize: '0.95rem' }}>{activeMainSignals.length}</span>
                    </div>
                    
-                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(16, 185, 129, 0.05)', backdropFilter: 'blur(10px)', padding: '8px 16px', borderRadius: '20px', border: '1px solid rgba(16, 185, 129, 0.2)', whiteSpace: 'nowrap' }}>
+                   <div 
+                       onClick={() => setDirectionFilter(directionFilter === 'LONG' ? 'ALL' : 'LONG')}
+                       style={{ display: 'flex', alignItems: 'center', gap: '6px', background: directionFilter === 'LONG' ? 'rgba(16, 185, 129, 0.25)' : 'rgba(16, 185, 129, 0.05)', backdropFilter: 'blur(10px)', padding: '8px 16px', borderRadius: '20px', border: directionFilter === 'LONG' ? '1px solid rgba(16, 185, 129, 0.5)' : '1px solid rgba(16, 185, 129, 0.2)', whiteSpace: 'nowrap', cursor: 'pointer', transition: 'all 0.2s' }}>
                        <TrendingUp size={16} color="#10b981" />
                        <span style={{ color: '#fff', fontWeight: '700', fontSize: '0.9rem' }}>{mainLongs} LONG</span>
                    </div>
 
-                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(239, 68, 68, 0.05)', backdropFilter: 'blur(10px)', padding: '8px 16px', borderRadius: '20px', border: '1px solid rgba(239, 68, 68, 0.2)', whiteSpace: 'nowrap' }}>
+                   <div 
+                       onClick={() => setDirectionFilter(directionFilter === 'SHORT' ? 'ALL' : 'SHORT')}
+                       style={{ display: 'flex', alignItems: 'center', gap: '6px', background: directionFilter === 'SHORT' ? 'rgba(239, 68, 68, 0.25)' : 'rgba(239, 68, 68, 0.05)', backdropFilter: 'blur(10px)', padding: '8px 16px', borderRadius: '20px', border: directionFilter === 'SHORT' ? '1px solid rgba(239, 68, 68, 0.5)' : '1px solid rgba(239, 68, 68, 0.2)', whiteSpace: 'nowrap', cursor: 'pointer', transition: 'all 0.2s' }}>
                        <TrendingDown size={16} color="#ef4444" />
                        <span style={{ color: '#fff', fontWeight: '700', fontSize: '0.9rem' }}>{mainShorts} SHORT</span>
                    </div>
@@ -1340,13 +1347,13 @@ export default function Dashboard({ user, onLogout }) {
             ) : (
                 <div className="signals-list">
                     {renderTableHeader()}
-                    {activeMainSignals.length === 0 ? (
+                    {activeMainSignals.filter(s => directionFilter === 'ALL' || s.type === directionFilter).length === 0 ? (
                         <div className="glass" style={{ padding: '3rem', textAlign: 'center', gridColumn: '1 / -1', borderRadius: '20px' }}>
                             <Target size={40} color="#888" style={{ marginBottom: '1rem' }} />
-                            <h3 style={{ color: '#aaa', marginBottom: '0.5rem' }}>Aktif Fırsat Yok</h3>
-                            <p style={{ color: '#666' }}>Piyasa koşulları şu an Elliott sarmalına uygun değil, lütfen bekleyin.</p>
+                            <h3 style={{ color: '#aaa', marginBottom: '0.5rem' }}>Filtrenize Uygun Fırsat Yok</h3>
+                            <p style={{ color: '#666' }}>Şu an filtrelediğiniz yönde uygun bir sinyal bulunamadı.</p>
                         </div>
-                    ) : activeMainSignals.map(s => renderSignalCard(s, false))}
+                    ) : activeMainSignals.filter(s => directionFilter === 'ALL' || s.type === directionFilter).map(s => renderSignalCard(s, false))}
                 </div>
             )}
           </>
