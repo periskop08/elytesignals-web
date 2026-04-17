@@ -143,7 +143,7 @@ export default function Dashboard({ user, onLogout }) {
   };
 
   // Kişisel Performans Kartları İçin Sinyal Geçmişi
-  const closedFavorites = favorites.filter(f => (f.status === 'WIN' || f.status === 'LOSS') && f.id > 73);
+  const closedFavorites = favorites.filter(f => (f.status === 'WIN' || f.status === 'LOSS') && f.favoriteId > 154);
   const totalWins = closedFavorites.filter(f => f.status === 'WIN').length;
   const totalLosses = closedFavorites.filter(f => f.status === 'LOSS').length;
   const closedSignals = totalWins + totalLosses;
