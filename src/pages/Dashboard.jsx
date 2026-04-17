@@ -696,13 +696,7 @@ export default function Dashboard({ user, onLogout }) {
                     <Zap color="#38bdf8" size={12} fill="#38bdf8" style={{marginRight: 4}} />
                     <span style={{color: '#38bdf8', fontSize: '0.8rem', fontWeight: 'bold'}}>Skor: {s.qualityScore || 0}</span>
                 </div>
-                {s.engineMode && (
-                    <div style={{ display: 'flex', alignItems: 'center', backgroundColor: s.engineMode === 'VOLUME' ? 'rgba(217, 70, 239, 0.15)' : 'rgba(234, 179, 8, 0.15)', padding: '2px 8px', borderRadius: '6px' }}>
-                        <span style={{color: s.engineMode === 'VOLUME' ? '#d946ef' : '#eab308', fontSize: '0.75rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px'}}>
-                            {s.engineMode === 'VOLUME' ? <><Zap size={10} color="#d946ef" fill="#d946ef"/> VOLUME</> : <><Target size={10} color="#eab308" fill="#eab308"/> ALPHA</>}
-                        </span>
-                    </div>
-                )}
+
                 {(s.dailyCount > 1 || (hasPastTrades && s.status === 'ACTIVE') || (s.warnings && s.warnings.includes('Flag'))) && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap', justifyContent: 'center' }}>
                         {s.warnings && s.warnings.includes('Flag') && (
