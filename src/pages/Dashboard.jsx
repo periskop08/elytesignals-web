@@ -139,7 +139,7 @@ export default function Dashboard({ user, onLogout }) {
         ? ((currentPrice - entry) / entry) * 100
         : ((entry - currentPrice) / entry) * 100;
     
-    return spotPnl * 10; // 10x Kaldıraç (ROE)
+    return spotPnl * 20; // 20x Kaldıraç (ROE)
   };
 
   // Kişisel Performans Kartları İçin Sinyal Geçmişi
@@ -160,7 +160,7 @@ export default function Dashboard({ user, onLogout }) {
   const totalFavPnl = activeFavorites.reduce((acc, curr) => {
       const sp = livePrices[curr.symbol.replace('/', '')];
       if(!sp) return acc;
-      const roePnl = (curr.type === 'LONG' ? ((sp - curr.entryPrice)/curr.entryPrice)*100 : ((curr.entryPrice - sp)/curr.entryPrice)*100) * 10;
+      const roePnl = (curr.type === 'LONG' ? ((sp - curr.entryPrice)/curr.entryPrice)*100 : ((curr.entryPrice - sp)/curr.entryPrice)*100) * 20;
       let usdProfit = 10 * (roePnl / 100); 
       if (user?.isAdmin) usdProfit -= 0.11;
       return acc + usdProfit;
@@ -176,9 +176,9 @@ export default function Dashboard({ user, onLogout }) {
        if (t.customPnl !== undefined && t.customPnl !== null) {
            roePnl = t.customPnl;
        } else if (t.status === 'WIN') {
-           roePnl = (t.type === 'LONG' ? ((t.targetPrice - t.entryPrice)/t.entryPrice)*100 : ((t.entryPrice - t.targetPrice)/t.entryPrice)*100) * 10;
+           roePnl = (t.type === 'LONG' ? ((t.targetPrice - t.entryPrice)/t.entryPrice)*100 : ((t.entryPrice - t.targetPrice)/t.entryPrice)*100) * 20;
        } else if (t.status === 'LOSS') {
-           roePnl = (t.type === 'LONG' ? ((t.stopPrice - t.entryPrice)/t.entryPrice)*100 : ((t.entryPrice - t.stopPrice)/t.entryPrice)*100) * 10;
+           roePnl = (t.type === 'LONG' ? ((t.stopPrice - t.entryPrice)/t.entryPrice)*100 : ((t.entryPrice - t.stopPrice)/t.entryPrice)*100) * 20;
            if(roePnl > 0) roePnl = -roePnl; // Loss is negative 
        }
        let usdProfit = 10 * (roePnl / 100);
@@ -224,8 +224,8 @@ export default function Dashboard({ user, onLogout }) {
       const p = calculatePnl(s);
       
       // R:R hesaplaması (1R = 10$)
-      // p değeri fonksiyonundan 10x ROE olarak geldiği için önce Spot yüzdesine çeviriyoruz
-      const spotPnl = p / 10;
+      // p değeri fonksiyonundan 20x ROE olarak geldiği için önce Spot yüzdesine çeviriyoruz
+      const spotPnl = p / 20;
       const riskPct = Math.abs((s.entryPrice - s.stopPrice) / s.entryPrice) * 100;
       const dollarPnl = riskPct > 0 ? (spotPnl / riskPct) * 10 : 0;
       
@@ -652,7 +652,7 @@ export default function Dashboard({ user, onLogout }) {
            const spotPnl = isLong 
               ? ((currentPrice - entry) / entry) * 100 
               : ((entry - currentPrice) / entry) * 100;
-           pnl = spotPnl * 10; // 10x ROE
+           pnl = spotPnl * 20; // 20x ROE
        }
        
        isProfit = pnl > 0;
