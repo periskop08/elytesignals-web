@@ -224,8 +224,10 @@ export default function Dashboard({ user, onLogout }) {
       const p = calculatePnl(s);
       
       // R:R hesaplaması (1R = 10$)
+      // p değeri fonksiyonundan 10x ROE olarak geldiği için önce Spot yüzdesine çeviriyoruz
+      const spotPnl = p / 10;
       const riskPct = Math.abs((s.entryPrice - s.stopPrice) / s.entryPrice) * 100;
-      const dollarPnl = riskPct > 0 ? (p / riskPct) * 10 : 0;
+      const dollarPnl = riskPct > 0 ? (spotPnl / riskPct) * 10 : 0;
       
       totalMarketPnl += dollarPnl;
       
