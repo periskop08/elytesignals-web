@@ -222,7 +222,13 @@ export default function Dashboard({ user, onLogout }) {
   let totalMarketPnl = 0;
   activeMainSignals.forEach(s => {
       const p = calculatePnl(s);
-      totalMarketPnl += (p * 10 / 100);
+      
+      // R:R hesaplaması (1R = 10$)
+      const riskPct = Math.abs((s.entryPrice - s.stopPrice) / s.entryPrice) * 100;
+      const dollarPnl = riskPct > 0 ? (p / riskPct) * 10 : 0;
+      
+      totalMarketPnl += dollarPnl;
+      
       if (p > 0) mainProfitCount++;
       else if (p < 0) mainLossCount++; 
   });
