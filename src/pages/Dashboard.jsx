@@ -710,7 +710,7 @@ export default function Dashboard({ user, onLogout }) {
                         )}
                     </div>
                 )}
-                <span style={{ color: '#888', fontSize: '0.7rem' }}>{new Date(s.createdAt + 'Z').toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                <span style={{ color: '#888', fontSize: '0.7rem', whiteSpace: 'nowrap' }}>{new Date(s.createdAt + 'Z').toLocaleString('tr-TR', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' })}</span>
             </div>
 
             {/* Sütun 4: Anlık Fiyat */}
