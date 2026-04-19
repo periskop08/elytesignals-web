@@ -1517,7 +1517,7 @@ export default function Dashboard({ user, onLogout }) {
                         >
                             <TrendingUp color="#4ade80" size={32} style={{ margin: '0 auto' }} />
                             <div style={{ position: 'absolute', right: '1rem', top: '1rem', background: 'rgba(74, 222, 128, 0.15)', padding: '2px 8px', borderRadius: '6px' }}>
-                                <span style={{ color: '#4ade80', fontSize: '0.75rem', fontWeight: 'bold' }}>+%{(stats.totalWinPercentage || 0).toFixed(1)}</span>
+                                <span style={{ color: '#4ade80', fontSize: '0.75rem', fontWeight: 'bold' }}>+${(stats.totalWinUsd || 0).toFixed(2)}</span>
                             </div>
                             <h2 style={{ margin: '1rem 0 0.25rem 0', fontSize: '1.75rem', color: '#fff' }}>{stats.wins}</h2>
                             <p style={{ color: '#888', fontSize: '0.85rem', margin: 0 }}>Başarılı (TP)</p>
@@ -1547,7 +1547,7 @@ export default function Dashboard({ user, onLogout }) {
                         >
                             <TrendingDown color="#f87171" size={32} style={{ margin: '0 auto' }} />
                             <div style={{ position: 'absolute', right: '1rem', top: '1rem', background: 'rgba(248, 113, 113, 0.15)', padding: '2px 8px', borderRadius: '6px' }}>
-                                <span style={{ color: '#f87171', fontSize: '0.75rem', fontWeight: 'bold' }}>-%{(stats.totalLossPercentage || 0).toFixed(1)}</span>
+                                <span style={{ color: '#f87171', fontSize: '0.75rem', fontWeight: 'bold' }}>-${(Math.abs(stats.totalLossUsd) || 0).toFixed(2)}</span>
                             </div>
                             <h2 style={{ margin: '1rem 0 0.25rem 0', fontSize: '1.75rem', color: '#fff' }}>{stats.losses}</h2>
                             <p style={{ color: '#888', fontSize: '0.85rem', margin: 0 }}>Stop (SL)</p>
