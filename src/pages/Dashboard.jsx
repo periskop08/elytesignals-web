@@ -1280,16 +1280,7 @@ export default function Dashboard({ user, onLogout }) {
              <div style={{ marginBottom: '1rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '8px' }}>
                     <div style={{display: 'flex', alignItems: 'center', gap: '15px'}}>
-                        <h1 style={{ fontSize: '2rem', margin: 0, fontWeight: '800' }}>Canlı Akış</h1>
-                        <select 
-                            value={categoryFilter}
-                            onChange={(e) => setCategoryFilter(e.target.value)}
-                            style={{ background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', padding: '6px 12px', borderRadius: '12px', fontSize: '0.9rem', cursor: 'pointer', outline: 'none' }}
-                        >
-                            <option value="ALL" style={{color: '#000'}}>Hepsi</option>
-                            <option value="CRYPTO" style={{color: '#000'}}>Kripto</option>
-                            <option value="ASSETS" style={{color: '#000'}}>Varlıklar</option>
-                        </select>
+                        <h1 style={{ fontSize: '2rem', margin: 0, fontWeight: '800' }}>Sinyaller</h1>
                     </div>
                     {activeMainSignals.length > 0 && (
                         <div className={marketPnlBlinkClass} style={{ background: 'rgba(255,255,255,0.03)', padding: '6px 14px', borderRadius: '10px', border: marketPnlBlinkClass ? undefined : `1px solid ${marketPnlColor}66`, transition: 'all 0.3s' }}>
@@ -1300,7 +1291,23 @@ export default function Dashboard({ user, onLogout }) {
                         </div>
                     )}
                 </div>
-                <p style={{ color: '#888', fontSize: '1rem', marginBottom: '16px' }}>Periskop yapay zeka analiz motorunun anlık tespitleri.</p>
+                
+                {macroData && (
+                    <div style={{ display: 'flex', gap: '12px', marginBottom: '16px', alignItems: 'center' }}>
+                        <div style={{ background: 'rgba(255,255,255,0.05)', padding: '6px 12px', borderRadius: '8px', border: `1px solid ${macroData.btc1h?.includes('BULL') ? 'rgba(74, 222, 128, 0.3)' : (macroData.btc1h?.includes('BEAR') ? 'rgba(248, 113, 113, 0.3)' : 'rgba(255, 255, 255, 0.1)')}`, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ color: '#888', fontSize: '0.85rem' }}>BTC (1H)</span>
+                            <span style={{ color: macroData.btc1h?.includes('BULL') ? '#4ade80' : (macroData.btc1h?.includes('BEAR') ? '#f87171' : '#aaa'), fontWeight: 'bold', fontSize: '0.9rem' }}>
+                                {macroData.btc1h || 'NÖTR'}
+                            </span>
+                        </div>
+                        <div style={{ background: 'rgba(255,255,255,0.05)', padding: '6px 12px', borderRadius: '8px', border: `1px solid ${macroData.eth1h?.includes('BULL') ? 'rgba(74, 222, 128, 0.3)' : (macroData.eth1h?.includes('BEAR') ? 'rgba(248, 113, 113, 0.3)' : 'rgba(255, 255, 255, 0.1)')}`, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ color: '#888', fontSize: '0.85rem' }}>ETH (1H)</span>
+                            <span style={{ color: macroData.eth1h?.includes('BULL') ? '#4ade80' : (macroData.eth1h?.includes('BEAR') ? '#f87171' : '#aaa'), fontWeight: 'bold', fontSize: '0.9rem' }}>
+                                {macroData.eth1h || 'NÖTR'}
+                            </span>
+                        </div>
+                    </div>
+                )}
 
                 <div className="stats-scroll-container" style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '12px', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                    <style>{`.stats-scroll-container::-webkit-scrollbar { display: none; }`}</style>
