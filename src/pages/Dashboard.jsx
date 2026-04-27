@@ -26,6 +26,23 @@ const renderMarkdown = (text) => {
     });
 };
 
+const TrendBadge = ({ trend }) => {
+    if (!trend) return <div style={{textAlign:'center', color:'#888', fontSize:'0.75rem', fontWeight:'600', padding:'6px', background:'rgba(255,255,255,0.02)', borderRadius:'6px', border:'1px solid rgba(255,255,255,0.05)'}}>YÜKLENİYOR</div>;
+    let color = '#aaa';
+    let bg = 'rgba(255,255,255,0.05)';
+    let text = 'NÖTR';
+    if (trend === 'STRONG_BULL') { color = '#4ade80'; bg = 'rgba(74, 222, 128, 0.1)'; text = 'GÜÇLÜ BOĞA'; }
+    else if (trend === 'BULL') { color = '#4ade80'; bg = 'rgba(74, 222, 128, 0.05)'; text = 'BOĞA'; }
+    else if (trend === 'STRONG_BEAR') { color = '#f87171'; bg = 'rgba(248, 113, 113, 0.1)'; text = 'GÜÇLÜ AYI'; }
+    else if (trend === 'BEAR') { color = '#f87171'; bg = 'rgba(248, 113, 113, 0.05)'; text = 'AYI'; }
+    
+    return (
+        <div style={{ background: bg, color: color, padding: '6px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 'bold', textAlign: 'center', border: `1px solid ${color}33`, letterSpacing: '0.5px' }}>
+            {text}
+        </div>
+    );
+};
+
 export default function Dashboard({ user, onLogout }) {
   const [signals, setSignals] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -1293,18 +1310,34 @@ export default function Dashboard({ user, onLogout }) {
                 </div>
                 
                 {macroData && (
-                    <div style={{ display: 'flex', gap: '12px', marginBottom: '16px', alignItems: 'center' }}>
-                        <div style={{ background: 'rgba(255,255,255,0.05)', padding: '6px 12px', borderRadius: '8px', border: `1px solid ${macroData.btc1h?.includes('BULL') ? 'rgba(74, 222, 128, 0.3)' : (macroData.btc1h?.includes('BEAR') ? 'rgba(248, 113, 113, 0.3)' : 'rgba(255, 255, 255, 0.1)')}`, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <span style={{ color: '#888', fontSize: '0.85rem' }}>BTC (1H)</span>
-                            <span style={{ color: macroData.btc1h?.includes('BULL') ? '#4ade80' : (macroData.btc1h?.includes('BEAR') ? '#f87171' : '#aaa'), fontWeight: 'bold', fontSize: '0.9rem' }}>
-                                {macroData.btc1h || 'NÖTR'}
-                            </span>
-                        </div>
-                        <div style={{ background: 'rgba(255,255,255,0.05)', padding: '6px 12px', borderRadius: '8px', border: `1px solid ${macroData.eth1h?.includes('BULL') ? 'rgba(74, 222, 128, 0.3)' : (macroData.eth1h?.includes('BEAR') ? 'rgba(248, 113, 113, 0.3)' : 'rgba(255, 255, 255, 0.1)')}`, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <span style={{ color: '#888', fontSize: '0.85rem' }}>ETH (1H)</span>
-                            <span style={{ color: macroData.eth1h?.includes('BULL') ? '#4ade80' : (macroData.eth1h?.includes('BEAR') ? '#f87171' : '#aaa'), fontWeight: 'bold', fontSize: '0.9rem' }}>
-                                {macroData.eth1h || 'NÖTR'}
-                            </span>
+                    <div style={{ background: 'rgba(30, 41, 59, 0.5)', borderRadius: '16px', padding: '16px', marginBottom: '24px', border: '1px solid rgba(255,255,255,0.05)', boxShadow: '0 4px 20px rgba(0,0,0,0.2)' }}>
+                        <h3 style={{ fontSize: '1.1rem', color: '#fff', margin: '0 0 16px 0', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 'bold' }}>
+                            <Map size={20} color="#22d3ee" /> Makro Trend Navigatörü
+                        </h3>
+                        <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr 1fr 1fr', gap: '10px', alignItems: 'center' }}>
+                            {/* Header */}
+                            <div style={{ color: '#888', fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase' }}>Zaman Dilimi</div>
+                            <div style={{ color: '#facc15', fontSize: '0.8rem', fontWeight: 'bold', textTransform: 'uppercase', textAlign: 'center', display:'flex', alignItems:'center', justifyContent:'center', gap:'4px' }}><Star size={14}/> BTC</div>
+                            <div style={{ color: '#c084fc', fontSize: '0.8rem', fontWeight: 'bold', textTransform: 'uppercase', textAlign: 'center', display:'flex', alignItems:'center', justifyContent:'center', gap:'4px' }}><Rocket size={14}/> ETH</div>
+                            <div style={{ color: '#22d3ee', fontSize: '0.8rem', fontWeight: 'bold', textTransform: 'uppercase', textAlign: 'center', display:'flex', alignItems:'center', justifyContent:'center', gap:'4px' }}><PieChart size={14}/> BTC DOM</div>
+
+                            {/* 1H Row */}
+                            <div style={{ color: '#ccc', fontSize: '0.85rem', fontWeight: '600' }}>1 Saatlik</div>
+                            <TrendBadge trend={macroData.btc1h} />
+                            <TrendBadge trend={macroData.eth1h} />
+                            <TrendBadge trend={macroData.dom1h} />
+
+                            {/* 4H Row */}
+                            <div style={{ color: '#ccc', fontSize: '0.85rem', fontWeight: '600' }}>4 Saatlik</div>
+                            <TrendBadge trend={macroData.btc4h} />
+                            <TrendBadge trend={macroData.eth4h} />
+                            <TrendBadge trend={macroData.dom4h} />
+
+                            {/* 1D Row */}
+                            <div style={{ color: '#fff', fontSize: '0.85rem', fontWeight: '800' }}>Günlük (1D)</div>
+                            <TrendBadge trend={macroData.btc1d} />
+                            <TrendBadge trend={macroData.eth1d} />
+                            <TrendBadge trend={macroData.dom1d} />
                         </div>
                     </div>
                 )}
