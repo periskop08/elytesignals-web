@@ -215,7 +215,7 @@ export default function Dashboard({ user, onLogout }) {
 
   // Sinyal Filitreleme
   const displayedFavorites = favorites.filter(s => {
-      if (favFilter === 'ALL') return s.status === 'ACTIVE';
+      if (favFilter === 'ALL') return s.status === 'ACTIVE' || s.status === 'WATCHLIST';
       return s.status === favFilter;
   });
 
@@ -877,10 +877,10 @@ export default function Dashboard({ user, onLogout }) {
                <Activity size={20} />
                <span>Sinyaller</span>
             </div>
-            <div className={`sidebar-nav-item ${activeTab === 'portfolio' ? 'active' : ''}`} onClick={() => handleTabClick('portfolio')}>
+            {/* <div className={`sidebar-nav-item ${activeTab === 'portfolio' ? 'active' : ''}`} onClick={() => handleTabClick('portfolio')}>
                <Briefcase size={20} />
                <span>Varlık Yöneticisi</span>
-            </div>
+            </div> */}
             <div className={`sidebar-nav-item ${activeTab === 'favorites' ? 'active' : ''}`} onClick={() => handleTabClick('favorites')}>
                <Star size={20} />
                <span>Favoriler</span>
